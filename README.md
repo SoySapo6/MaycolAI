@@ -75,7 +75,7 @@ Simulador de streamer: ¡Enfréntate a **trolls** y **hackeos**!
 
 2. Instala las dependencias necesarias:
 
-    pkg upgrade -y && pkg update -y && pkg install git -y && pkg install nodejs-lts -y && pkg install ffmpeg -y && npm install -g yarn && pkg install python-pip && pip install yt-dlp
+    pkg upgrade -y && pkg update -y && pkg install git -y && pkg install nodejs-lts -y && pkg install ffmpeg -y && npm install -g yarn && pkg install python-pip && pip install yt-dlp && npm install gemini-chatbot
 
 3. Clona el repositorio:
 

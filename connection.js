@@ -106,8 +106,8 @@ async function startConnection() {
           errorLog("Borre la carpeta baileys, Bot desconectado Permanentemente");  
           process.exit(1);  
         } else {  
-          warningLog("Conexión perdida. Intentando reconectar en 1 segundo...");  
-          setTimeout(startConnection, 1000);  
+          warningLog("Conexión perdida. Intentando reconectar en el menor tiempo posible...");  
+          setTimeout(startConnection, 1);  
         }  
       } else if (connection === "open") {  
         successLog("¡El bot está conectado exitosamente!");  
