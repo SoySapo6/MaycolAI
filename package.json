@@ -1,0 +1,25 @@
+{
+  "name": "Maycol AI",
+  "version": "V62",
+  "description": "Bot de WhatsApp minimalista multifunções.",
+  "main": "start.js",
+  "scripts": {
+    "start": "node --watch ./connection.js",
+    "test": "node ./test.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "lite",
+    "devgui"
+  ],
+  "author": "Dev Gui",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "baileys": "^6.7.9",
+    "correios-brasil": "^3.0.6",
+    "hercai": "^12.4.0",
+    "pino": "^9.5.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "51921826291@s.whatsapp.net": {
+    "nombre": "Jugador 1",
+    "vida": 66,
+    "energia": 90,
+    "dinero": 87,
+    "nivel": 1,
+    "experiencia": 20,
+    "hogar": null,
+    "familia": null,
+    "inventario": [],
+    "historialCartas": [],
+    "victorias": 1,
+    "derrotas": 0
+  }
+}

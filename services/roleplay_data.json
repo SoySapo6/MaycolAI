@@ -1,0 +1,40 @@
+{
+  "": {
+    "nombre": "Invitado",
+    "nivel": 1,
+    "experiencia": 0,
+    "vida": 100,
+    "oro": 50,
+    "inventario": []
+  },
+  "51921826291@s.whatsapp.net": {
+    "nombre": "SoyMaycol (Creador)",
+    "nivel": 1817,
+    "experiencia": 10,
+    "vida": 100,
+    "oro": 5000,
+    "inventario": [
+      "Pitos"
+    ]
+  },
+  "50493732693@s.whatsapp.net": {
+    "nombre": "Ado (Admin)",
+    "nivel": 1,
+    "experiencia": 0,
+    "vida": 100,
+    "oro": 50,
+    "inventario": [
+      "Gema Mágica"
+    ]
+  },
+  "undefined": {
+    "nombre": "Usuario",
+    "nivel": 1,
+    "experiencia": 15,
+    "vida": 100,
+    "oro": 70,
+    "inventario": [
+      "Poción de Vida"
+    ]
+  }
+}

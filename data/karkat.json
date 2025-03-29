@@ -1,0 +1,9 @@
+{
+  "hambre": 50,
+  "felicidad": 95,
+  "energia": 40,
+  "salud": 100,
+  "higiene": 90,
+  "durmiendo": true,
+  "despertarEn": 1742316350175
+}
