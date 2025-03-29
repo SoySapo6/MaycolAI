@@ -75,11 +75,11 @@ Simulador de streamer: ¡Enfréntate a **trolls** y **hackeos**!
 
 2. Instala las dependencias necesarias:
 
-    pkg upgrade -y && pkg update -y && pkg install git -y && pkg install nodejs-lts -y && pkg install ffmpeg -y && npm install -g yarn && pkg install python-pip && pip install yt-dlp && npm install gemini-chatbot
+    pkg upgrade -y && pkg update -y && pkg install git -y && pkg install nodejs-lts -y && pkg install ffmpeg -y && npm install -g yarn && pkg install python-pip && pip install yt-dlp
 
 3. Clona el repositorio:
 
-   mkdir /sdcard/Gatito-mi-bot && cd /sdcard/Gatito-mi-bot && git clone https://github.com/SoySapo6/MaycolAI
+   mkdir /sdcard/Gatito-mi-bot && cd /sdcard/Gatito-mi-bot && git clone https://github.com/SoySapo6/MaycolAI && npm install gemini-chatbot
 
 4. Abre tu gestor de archivos
 
