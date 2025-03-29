@@ -2,14 +2,8 @@ const { exec } = require("child_process");
 
 async function chat(prompt) {
   return new Promise((resolve, reject) => {
-    const command = `curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCYWNbM2ZgdDSp9NlFxTgp0Wtwaaw7dyRc" \
-      -H "Content-Type: application/json" \
-      -X POST \
-      -d '{
-        "contents": [{
-          "parts": [{"text": "${prompt}"}]
-        }]
-      }'`;
+    // Usamos exec para ejecutar el comando gemini-chatbot
+    const command = `node node_modules/gemini-chatbot/gemini.js "${prompt}"`;
 
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -20,12 +14,13 @@ async function chat(prompt) {
         reject(`Stderr: ${stderr}`);
         return;
       }
+
       try {
-        const response = JSON.parse(stdout);
-        const reply = response.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI.";
-        resolve(reply);
+        // Suponiendo que la respuesta de gemini.js esté en stdout
+        // Procesamos la salida como una respuesta directa
+        resolve(stdout.trim()); // Aquí asumimos que stdout contiene el mensaje de respuesta
       } catch (err) {
-        reject(`JSON Parse Error: ${err.message}`);
+        reject(`Error al procesar la salida: ${err.message}`);
       }
     });
   });

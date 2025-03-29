@@ -1,7 +1,7 @@
 const axios = require("axios");
 const { exec } = require("child_process");
 
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = "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";
 const GEMINI_API_KEY = "AIzaSyCYWNbM2ZgdDSp9NlFxTgp0Wtwaaw7dyRc";
 
 async function chatOpenRouter(prompt) {
@@ -65,7 +65,7 @@ async function duoAI(userMessage) {
     // Ahora OpenRouter recibe la respuesta de Gemini para contexto, pero no se envía al usuario
     await chatOpenRouter(`MiaIA dijo: ${respuestaGemini}`);
 
-    return `👤 *Tu:* ${userMessage}\n👨 *John Egbert:* ${respuestaOR}\n👱‍♀ *Roxy Lalonde:* ${respuestaGemini}`;
+    return `👤 *Tu:* ${userMessage}\n👨 *Kanaya Maryam:* ${respuestaOR}\n👱‍♀ *Roxy Lalonde:* ${respuestaGemini}`;
 }
 
 module.exports = { duoAI };

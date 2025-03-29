@@ -20,6 +20,7 @@
     "baileys": "^6.7.9",
     "correios-brasil": "^3.0.6",
     "hercai": "^12.4.0",
-    "pino": "^9.5.0"
+    "pino": "^9.5.0",
+    "gemini-chatbot": "^1.0.0"
   }
 }
