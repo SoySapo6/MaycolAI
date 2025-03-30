@@ -7,6 +7,9 @@
 🌟 ¡Bienvenido a **MaycolAI**! 🌟  
 Este bot de WhatsApp, basado en **Baileys**, está cargado de funciones impresionantes, simuladores locos y un montón de comandos útiles. 😎
 
+⚠️ ADVERTENCIA: El bot dejo de funcionar por un error, Mire nuestro otro proyecto
+https://replit.com/@karatekidameric/MaycolAIUltra-MD?s=app
+
 ---
 
 ## 🌟 **Tecnología Avanzada** 🌟
