@@ -1,4 +1,3 @@
-
 //Creado por Maycol 🌸
  function mapearLenguaje(comando) {
     const lenguajes = {
@@ -396,16 +395,18 @@ case "dalle":
     case "tempmail":
     await tempmail.execute(socket, from, args);
     break;
-    case "menu":
+     case "menu":
     await react("🇯🇵");
+
     // Obtener el AdReply
     let adReplyMenu = getAdReplyScript(); // Llama a la función para obtener el AdReply
 
-    // Enviar el menú con la imagen y AdReply
+    // Enviar el menú con el MP4 y AdReply
     await socket.sendMessage(from, {
-        image: { url: `${MENUIMAGE_SoyMaycol}` }, // Enviamos la imagen con la URL correcta
+        video: { url: path.join(ASSETS_DIR, "images", "menu.mp4") }, // Usamos el MP4 optimizado
         caption: await menuowner(), // Llamamos a menuowner() para obtener el texto del menú
-        mimetype: "image/jpeg",
+        gifPlayback: true, // Hace que se vea como GIF
+        mimetype: "video/mp4",
         contextInfo: adReplyMenu.contextInfo // Adjuntamos el AdReply aquí
     });
 
