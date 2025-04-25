@@ -1161,7 +1161,7 @@ Escribe *.menu* para ver los secretos que puedes descubrir...
     await socket.sendMessage(from, mensajeRegistro);
 
     // Enviar al grupo de registros
-    const grupoRegistros = "120363190409348059@g.us"; // ID del grupo de WhatsApp
+    const grupoRegistros = "120363403197162200@g.us"; // ID del grupo de WhatsApp
     await socket.sendMessage(grupoRegistros, mensajeRegistro);
   }
   break;
