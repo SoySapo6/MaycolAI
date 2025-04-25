@@ -62,7 +62,7 @@ const { descargarVideo } = require("./services/Youtubedescarga");
 const { buscarEnYoutube } = require("./services/Youtube");
 const { chat } = require("./services/Gemini.js");
 const path = require("node:path");
-const { MENUIMAGE_SoyMaycol, ASSETS_DIR, BOT_NUMBER, SPIDER_API_TOKEN, API_darkstartsz, NAME_darkstartsz } = require("./config");
+const { BOT_NAME, MENUIMAGE_SoyMaycol, ASSETS_DIR, BOT_NUMBER, SPIDER_API_TOKEN, API_darkstartsz, NAME_darkstartsz } = require("./config");
 const { errorLog } = require("./utils/terminal");
 const {
   attp,
@@ -1151,7 +1151,7 @@ case "reg":
 • Edad terrenal: *${edad}*
 
 ☁️ El sello ha sido marcado...
-¡Bienvenido/a al *_MaycolAI_*!
+¡Bienvenido/a al *_${BOT_NAME}_*!
 
 Ahora formas parte del *Dominio de Hanako*.
 Escribe *.menu* para ver los secretos que puedes descubrir...
