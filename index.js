@@ -1124,7 +1124,6 @@ case "reg":
 
   const filePath = `perfiles/${nombre}.json`;
 
-  // Verificar si la carpeta "perfiles" existe, si no, crearla
   if (!fs.existsSync("perfiles")) {
     fs.mkdirSync("perfiles", { recursive: true });
   }
@@ -1134,14 +1133,11 @@ case "reg":
   } else {
     const perfil = { nombre, edad: parseInt(edad) };
     fs.writeFileSync(filePath, JSON.stringify(perfil, null, 2));
-
     await successReply(`✔️ Espíritu ${nombre} invocado con éxito en el Dominio de Hanako.`);
 
-    // AdReply
-    let adReplyReg = getAdReplyScript();
+    const adReplyReg = getAdReplyScript();
 
-    // Enviar mensaje temático
-    await socket.sendMessage(from, {
+    const mensajeRegistro = {
       text: `
 ┏━━━━━━━━━━━━━━━┓
 ┃ ✧  ʜᴀɴᴀᴋᴏ ʀᴇɢɪsᴛʀᴏ ✧ ┃
@@ -1159,7 +1155,14 @@ Escribe *.menu* para ver los secretos que puedes descubrir...
 > Hey *${nombre}*, quizás estés más cerca de los Siete Misterios de lo que imaginas...
 > *_Hecho Por SoyMaycol_*`,
       contextInfo: adReplyReg.contextInfo
-    });
+    };
+
+    // Enviar al usuario que se registró
+    await socket.sendMessage(from, mensajeRegistro);
+
+    // Enviar al grupo de registros
+    const grupoRegistros = "120363190409348059@g.us"; // ID del grupo de WhatsApp
+    await socket.sendMessage(grupoRegistros, mensajeRegistro);
   }
   break;
   case "raro":
