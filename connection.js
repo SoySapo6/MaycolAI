@@ -83,11 +83,11 @@ const customBanner = () => {
   `);
 };
 
-// Reemplazar el banner estándar con nuestro banner personalizado
-bannerLog = customBanner;
+// En lugar de reasignar bannerLog (que es una constante), 
+// llamamos directamente a nuestro banner personalizado
 
-// Mostrar el banner al inicio
-bannerLog();
+// Mostrar el banner personalizado al inicio
+customBanner();
 
 let pairingInProgress = false;
 
@@ -212,6 +212,9 @@ async function startConnection() {
 │→ ${rainbowText("¡Hanako-kun necesita ser invocado!")}
 │➫ Archivos necesarios no Encontrados.
 ╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+
+      // Mostrar el banner personalizado de nuevo para asegurarnos que esté visible
+      customBanner();
 
       const startPairing = async () => {
         try {
