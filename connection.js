@@ -83,7 +83,7 @@ async function startConnection() {
 
     if (!socket.authState.creds.registered) {
   warningLog("Archivos necesarios no Encontrados.");
-
+            
   let enableTutor = "s";
 
   do {
