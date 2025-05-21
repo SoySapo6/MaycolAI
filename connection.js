@@ -126,6 +126,7 @@ async function startConnection() {
     }
   });
     }
+  }
         try {
           // Cambiar la biografía del perfil del bot
           const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
