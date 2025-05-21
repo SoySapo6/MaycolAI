@@ -1,4 +1,7 @@
-// 👻 Hecho por Maycol 🚽 Tematizado de Hanako-kun 👻
+// ╔══════════════════════════════════════════════════════════╗
+// ║ 👻 ✧ 𝐇𝐚𝐧𝐚𝐤𝐨-𝐤𝐮𝐧 𝐌𝐚𝐲𝐜𝐨𝐥𝐀𝐈 𝐁𝐨𝐭 ✧ 👻 ║
+// ║ Hecho por Maycol - Adaptado con temática Hanako-kun   ║
+// ╚══════════════════════════════════════════════════════════╝
 
 // Importaciones principales de @whiskeysockets/baileys 
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, isJidNewsletter, delay } = require("@whiskeysockets/baileys");
@@ -10,9 +13,6 @@ const pino = require("pino");
 const { BAILEYS_CREDS_DIR } = require("./config"); 
 const { runLite } = require("./index"); 
 const { onlyNumbers } = require("./utils/functions"); 
-const chalk = require("chalk"); // Añadimos chalk para colores arcoíris
-const gradient = require("gradient-string"); // Añadimos gradient-string para texto gradiente
-const figlet = require("figlet"); // Para texto ASCII art
 const { 
   textInput, 
   infoLog, 
@@ -23,21 +23,7 @@ const {
   bannerLog, 
 } = require("./utils/terminal");
 const { welcome } = require("./welcome");
-
-// Arreglo de emojis de Hanako-kun
-const hanakoEmojis = ["👻", "🚽", "✨", "🔮", "⚰️", "🖤", "💫", "🌸"];
-
-// Función para obtener un emoji aleatorio
-const randomEmoji = () => hanakoEmojis[Math.floor(Math.random() * hanakoEmojis.length)];
-
-// Función para crear texto arcoiris
-const rainbowText = (text) => {
-  return gradient.rainbow(text);
-};
-
-// Caracteres especiales para decoración
-const decorChars = ["༉‧₊˚✧", "•*¨*•.¸¸♪", "꒦꒷꒦꒷꒦꒷", "彡☆", "˚₊· ͟͟͞͞➳❥", "¸¸♬·¯·♩¸"];
-const randomDecor = () => decorChars[Math.floor(Math.random() * decorChars.length)];
+const chalk = require('chalk'); // Para textos de colores
 
 const msgRetryCounterCache = new NodeCache();
 
@@ -74,28 +60,39 @@ function createSimpleStore() {
 // Crear un almacén simple 
 const store = createSimpleStore();
 
-// Banner personalizado de Hanako-kun
-function customBannerLog() {
-  console.log(`
-${gradient.pastel("╔══════════════════════════════════════════════════╗")}
-${gradient.pastel("║")}  ${chalk.magenta("🚽 𝕄𝕒𝕪𝕔𝕠𝕝𝔸𝕀 × 𝓗𝓪𝓷𝓪𝓴𝓸-𝓴𝓾𝓷 🚽")}  ${gradient.pastel("║")}
-${gradient.pastel("╚══════════════════════════════════════════════════╝")}
-${chalk.cyan("ʕ•́ᴥ•̀ʔっ♡")} ${chalk.yellow("Hola, soy el fantasma del baño número 7")} ${chalk.cyan("♡ʕ•́ᴥ•̀ʔっ")}
-${gradient.rainbow("✧･ﾟ: *✧･ﾟ:* 𝐵𝒾𝑒𝓃𝓋𝑒𝓃𝒾𝒹𝑜 𝒶𝓁 𝑀𝓊𝓃𝒹𝑜 𝐸𝓈𝓅𝒾𝓇𝒾𝓉𝓊𝒶𝓁 *:･ﾟ✧*:･ﾟ✧")}
-`);
-}
+// Función para generar texto arcoíris
+const rainbowText = (text) => {
+  const colors = ['red', 'yellow', 'green', 'cyan', 'blue', 'magenta'];
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    const color = colors[i % colors.length];
+    result += chalk[color](text[i]);
+  }
+  return result;
+};
 
-// Reemplazar el banner original con nuestro banner personalizado
-bannerLog = customBannerLog;
+// Banner personalizado de Hanako-kun
+const customBanner = () => {
+  console.log(`
+╔═════════════════════════════════════════════════════════════════╗
+║  👻 ♥‿♥ 𝐇𝐚𝐧𝐚𝐤𝐨-𝐤𝐮𝐧 𝐌𝐚𝐲𝐜𝐨𝐥𝐀𝐈 𝐁𝐨𝐭 ♥‿♥ 👻  ║
+╠═════════════════════════════════════════════════════════════════╣
+║  ◦•●◉✿ "𝘌𝘷𝘦𝘳𝘺 𝘭𝘦𝘨𝘦𝘯𝘥 𝘩𝘢𝘴 𝘪𝘵𝘴 𝘰𝘸𝘯 𝘣𝘰𝘶𝘯𝘥𝘢𝘳𝘪𝘦𝘴" ✿◉●•◦  ║
+║  ⋆｡°✩ 𝗘𝗹 𝗯𝗼𝘁 𝗱𝗲𝗹 𝗯𝗮𝗻̃𝗼 𝗲𝘀𝘁𝗮́ 𝗹𝗶𝘀𝘁𝗼 𝗽𝗮𝗿𝗮 𝗰𝘂𝗺𝗽𝗹𝗶𝗿 𝘁𝘂𝘀 𝗱𝗲𝘀𝗲𝗼𝘀! ✩°｡⋆ ║
+╚═════════════════════════════════════════════════════════════════╝
+  `);
+};
+
+// Reemplazar el banner estándar con nuestro banner personalizado
+bannerLog = customBanner;
+
+// Mostrar el banner al inicio
 bannerLog();
 
-let tutorialCompleto = false;
-let intentosConexion = 0;
-const MAX_INTENTOS = 3;
+let pairingInProgress = false;
 
 async function startConnection() { 
   try { 
-    intentosConexion++;
     const { state, saveCreds } = await useMultiFileAuthState(BAILEYS_CREDS_DIR); 
     const { version } = await fetchLatestBaileysVersion();
 
@@ -134,28 +131,42 @@ async function startConnection() {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
 
         if (statusCode === DisconnectReason.loggedOut) {
-          errorLog("🚽👻 " + chalk.redBright("Borre la carpeta baileys, Bot desconectado Permanentemente"));
+          console.log(`
+╭» 👻 ¡𝕆𝕙 𝕟𝕠! 👻
+│→ ${rainbowText("El espíritu de Hanako-kun ha abandonado el baño...")}
+│➫ Borre la carpeta baileys, Bot desconectado Permanentemente
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
           process.exit(1);
         } else {
-          warningLog(`${randomEmoji()} ${chalk.yellowBright("Conexión perdida. Hanako-kun está intentando reconectar...")} ${randomEmoji()}`);
-          if (intentosConexion < MAX_INTENTOS) {
-            setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
-          } else {
-            errorLog("👻 Demasiados intentos de reconexión fallidos. ¡Hanako-kun está cansado!");
-            process.exit(1);
-          }
+          console.log(`
+╭» 👻 𝔸𝕕𝕧𝕖𝕣𝕥𝕖𝕟𝕔𝕚𝕒 👻
+│→ ${rainbowText("Conexión perdida. El espíritu está inquieto...")}
+│➫ Intentando reconectar en el menor tiempo posible...
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
         }
       } else if (connection === "open") {
-        intentosConexion = 0; // Reiniciar contador de intentos
-        successLog(`${randomDecor()} ${chalk.greenBright("¡El fantasma de Hanako-kun está presente!")} ${randomDecor()}`);
+        console.log(`
+╭» 💫 ¡𝕊𝕦𝕔𝕖𝕤𝕠! 💫
+│→ ${rainbowText("¡El espíritu de Hanako-kun ha respondido a tu llamado!")}
+│➫ El bot está conectado exitosamente
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
 
         try {
           // Cambiar la biografía del perfil del bot
-          const nuevaBio = "🚽👻 ★彡[ʜᴀɴᴀᴋᴏ-ᴋᴜɴ × ᴍᴀʏᴄᴏʟᴀɪ]彡★ ꒷꒦꒷꒦ ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+          const nuevaBio = "👻⋆｡°✩ [ʜᴀɴᴀᴋᴏ-ᴋᴜɴ ᴍᴀʏᴄᴏʟᴀɪ]✩°｡⋆ ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
           await socket.updateProfileStatus(nuevaBio);
-          successLog("✅ " + chalk.cyanBright("Biografía del fantasma actualizada a: ") + chalk.magentaBright(nuevaBio));
+          console.log(`
+╭» 💫 ¡ℂ𝕒𝕞𝕓𝕚𝕠 𝕖𝕩𝕚𝕥𝕠𝕤𝕠! 💫
+│→ ${rainbowText("Biografía del bot actualizada a:")} 
+│➫ ${nuevaBio}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
         } catch (error) {
-          errorLog("❌ " + chalk.redBright("Error al actualizar la biografía del fantasma."));
+          console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 👻
+│→ ${rainbowText("No pude cambiar mi biografía...")}
+│➫ Error al actualizar la biografía del bot
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
         }
 
         // Configurar manejadores de eventos para mensajes cuando la conexión está abierta
@@ -171,18 +182,18 @@ async function startConnection() {
           const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
 
           console.log(`
-${gradient.passion("╔════════════════════════════════╗")}
-${gradient.passion("║")} ${chalk.magentaBright("🔮 ✧ 𝑵𝒖𝒆𝒗𝒐 𝑴𝒆𝒏𝒔𝒂𝒋𝒆 𝑬𝒔𝒑𝒊𝒓𝒊𝒕𝒖𝒂𝒍 ✧ 🔮")} ${gradient.passion("║")}
-${gradient.passion("╚════════════════════════════════╝")}
+╔══════════════════════════════════════╗
+║ 👻 ✧ 𝓗𝓪𝓷𝓪𝓴𝓸-𝓴𝓾𝓷 𝓡𝓮𝓬𝓲𝓫𝓲𝓸́ 𝓜𝓮𝓷𝓼𝓪𝓳𝓮 ✧ 👻 ║
+╚══════════════════════════════════════╝
 
-${chalk.cyanBright("⏰")} ${chalk.yellowBright("(⁠｡⁠･⁠ω⁠･⁠｡⁠)ﾉ⁠♡")} ${gradient.rainbow("𝑯𝒐𝒓𝒂: " + hora)}
-${chalk.cyanBright("✉️")} ${chalk.yellowBright("⊂(⁠(⁠・⁠▽⁠・⁠)⁠)⁠⊃")} ${gradient.rainbow("𝑻𝒊𝒑𝒐 𝒅𝒆 𝑴𝒆𝒏𝒔𝒂𝒋𝒆: " + tipoMensaje)}
-${chalk.cyanBright("👻")} ${gradient.rainbow("𝑵𝒖́𝒎𝒆𝒓𝒐/𝑮𝒓𝒖𝒑𝒐: " + destino)}
+⏰ (っ◔◡◔)っ ${rainbowText("𝑯𝒐𝒓𝒂:")}: ${hora}
+✉️ ⊂(◉‿◉)つ ${rainbowText("𝑻𝒊𝒑𝒐 𝒅𝒆 𝑴𝒆𝒏𝒔𝒂𝒋𝒆:")}: ${tipoMensaje}
+༄ ₊˚ ${rainbowText("𝑵𝒖́𝒎𝒆𝒓𝒐/𝑮𝒓𝒖𝒑𝒐:")}: ${destino} ˚₊ ༄
 
-${chalk.magentaBright("━━━━━༺♥༻━━━━━")}
-${chalk.cyan("🚽")} ${chalk.yellowBright(`*${config.BOT_NAME}*`)} ${chalk.whiteBright("te observa desde el baño número 7...")}
-${chalk.magentaBright("¡𝑪𝒖𝒊𝒅𝒂𝒅𝒐 𝒔𝒊 𝒔𝒖𝒔𝒖𝒓𝒓𝒂 𝒕𝒖 𝒏𝒐𝒎𝒃𝒓𝒆!")} ${chalk.red("༼⁠⁰⁠o⁠⁰⁠；༽")}
-${chalk.magentaBright("━━━━━༺♥༻━━━━━")}
+━━━━━༻✧༺━━━━━
+👻 *${config.BOT_NAME}* te observa desde el baño del tercer piso...
+"${rainbowText("¡Concede mi deseo, Hanako-kun!")}" ₊˚✧
+━━━━━༻✧༺━━━━━
 `);
 
           runLite({ socket, data: { messages, type } });
@@ -193,53 +204,115 @@ ${chalk.magentaBright("━━━━━༺♥༻━━━━━")}
     });
 
     // Proceso de vinculación (si es necesario)
-    if (!socket.authState.creds.registered) {
-      warningLog(gradient.rainbow("⚰️ ") + chalk.yellowBright("Archivos necesarios no Encontrados. Hanako-kun necesita vincularse.") + gradient.rainbow(" ⚰️"));
+    if (!socket.authState.creds.registered && !pairingInProgress) {
+      pairingInProgress = true;
+      
+      console.log(`
+╭» 👻 𝔸𝕕𝕧𝕖𝕣𝕥𝕖𝕟𝕔𝕚𝕒 👻
+│→ ${rainbowText("¡Hanako-kun necesita ser invocado!")}
+│➫ Archivos necesarios no Encontrados.
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
 
-      if (!tutorialCompleto) { // Evitamos el bucle con esta variable
-        tutorialCompleto = true; // Marcamos que ya pasamos por aquí
-        let enableTutor = await textInput(gradient.rainbow("¿Deseas un tutorial? s/n : "));
-        
-        // Validamos la respuesta
-        while (!["s", "n"].includes(enableTutor.toLowerCase())) {
-          errorLog(chalk.redBright("Opción inválida") + " " + chalk.cyanBright("(⁠っ⁠˘̩⁠╭⁠╮⁠˘̩⁠)⁠っ"));
-          enableTutor = await textInput(gradient.rainbow("¿Deseas un tutorial? s/n : "));
+      const startPairing = async () => {
+        try {
+          const enableTutor = await textInput(`[👻 ${rainbowText("𝕄𝕒𝕪𝕔𝕠𝕝𝔸𝕀")}: INPUT] ¿Deseas un tutorial? s/n : `);
+          
+          if (!["s", "n"].includes(enableTutor.toLowerCase())) {
+            console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 👻
+│→ ${rainbowText("Opción inválida, debes escribir 's' o 'n'")}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            return await startPairing();
+          }
+
+          const phoneNumber = await textInput(`[👻 ${rainbowText("𝕄𝕒𝕪𝕔𝕠𝕝𝔸𝕀")}: INPUT] Ingrese su número: `);
+
+          if (!phoneNumber || !onlyNumbers(phoneNumber)) {
+            console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 👻
+│→ ${rainbowText("Número incorrecto, Ejemplo: 51921826291.")}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            process.exit(1);
+          }
+
+          if (enableTutor.toLowerCase() === "s") {
+            await delay(1000);
+            console.log(`
+╭» 👻 𝕋𝕦𝕥𝕠𝕣𝕚𝕒𝕝 👻
+│→ ${rainbowText("Estamos invocando a Hanako-kun... Recuerda:")}
+│➫ Para invocar correctamente, golpea la puerta del baño 3 veces y di su nombre
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            await delay(5000);
+            console.log(`
+╭» 👻 ℙ𝕣𝕠𝕘𝕣𝕖𝕤𝕠 👻
+│→ ${rainbowText("⌛ Preparando ritual de invocación...")} 
+│➫ 25% completado
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            await delay(8000);
+            console.log(`
+╭» 👻 ℙ𝕣𝕠𝕘𝕣𝕖𝕤𝕠 👻
+│→ ${rainbowText("⌛ Buscando a Hanako-kun en el baño...")}
+│➫ 50% completado
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            await delay(8000);
+            console.log(`
+╭» 👻 ℙ𝕣𝕠𝕘𝕣𝕖𝕤𝕠 👻
+│→ ${rainbowText("⌛ Hanako-kun está escuchando...")}
+│➫ 75% completado
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            await delay(8000);
+            console.log(`
+╭» 👻 ¡𝕊𝕦𝕔𝕖𝕤𝕠! 👻
+│→ ${rainbowText("✅ ¡Hanako-kun ha sido invocado!")}
+│➫ Enviando código de vinculación...
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            await delay(3000);
+          }
+
+          const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+          console.log(`
+╭» 👻 ℂ𝕠́𝕕𝕚𝕘𝕠 𝕕𝕖 𝕧𝕚𝕟𝕔𝕦𝕝𝕒𝕔𝕚𝕠́𝕟 👻
+│→ ${rainbowText("Tu código para invocar a Hanako-kun es:")}
+│➫ ${code}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          
+          console.log(`
+╭» 👻 𝕀𝕟𝕤𝕥𝕣𝕦𝕔𝕔𝕚𝕠𝕟𝕖𝕤 👻
+│→ ${rainbowText("Por favor, complete el proceso de vinculación")}
+│➫ Ingresa el código en tu WhatsApp para completar el ritual
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          console.log(`
+╭» 👻 𝔼𝕤𝕡𝕖𝕣𝕒𝕟𝕕𝕠 👻
+│→ ${rainbowText("Esperando a que se complete la invocación...")}
+│➫ Hanako-kun está ansioso por conocerte
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          
+        } catch (error) {
+          console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕕𝕦𝕣𝕒𝕟𝕥𝕖 𝕧𝕚𝕟𝕔𝕦𝕝𝕒𝕔𝕚𝕠́𝕟 👻
+│→ ${rainbowText("Algo ha interrumpido la invocación:")}
+│➫ ${error.message}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          pairingInProgress = false;
         }
+      };
 
-        const phoneNumber = await textInput(chalk.cyanBright("Ingrese su número (ejemplo: 51921826291): "));
-
-        if (!phoneNumber || !onlyNumbers(phoneNumber)) {
-          errorLog(chalk.redBright("Número incorrecto, Ejemplo: 51921826291.") + " " + chalk.magentaBright("ಥ_ಥ"));
-          process.exit(1);
-        }
-
-        if (enableTutor.toLowerCase() === "s") {
-          await delay(1000);
-          tutorLog(chalk.cyanBright("Hanako-kun está generando su código... Recuerda:") + "\n");
-          await delay(5000);
-          tutorLog(chalk.yellowBright("⌛ Generando código, aguarde.. 25% completado.") + " " + chalk.magentaBright("ʕ•ᴥ•ʔ") + "\n");
-          await delay(10000);
-          tutorLog(chalk.yellowBright("⌛ Generando código, aguarde... 50% completado.") + " " + chalk.magentaBright("(づ｡◕‿‿◕｡)づ") + "\n", "cyan");
-          await delay(10000);
-          tutorLog(chalk.yellowBright("⌛ Generando código, aguarde... 75% completado.") + " " + chalk.magentaBright("(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧") + "\n");
-          await delay(10000);
-          tutorLog(chalk.greenBright("✅ Generación completada! Hanako-kun está enviando el código...") + " " + chalk.magentaBright("ヽ(^o^)ノ") + "\n", "green");
-          await delay(5000);
-        }
-
-        const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-        infoLog(gradient.rainbow(`Código de Hanako-kun: ${code}`));
-        
-        // Informar al usuario que debe completar el proceso de vinculación
-        successLog(chalk.greenBright("Por favor, complete el proceso de vinculación ingresando el código en su WhatsApp."));
-        successLog(chalk.cyanBright("Esperando a que se complete la vinculación con el mundo espiritual...") + " " + chalk.magentaBright("(∩｡･ｪ･｡)っ.ﾟ☆｡'`"));
-      }
+      await startPairing();
+      pairingInProgress = false;
     }
 
     return socket;
   } catch (error) { 
-    errorLog(`${randomEmoji()} ${chalk.redBright("Error en la conexión espiritual: " + error.message)} ${randomEmoji()}`); 
-    warningLog(chalk.yellowBright("Hanako-kun intentará reconectar en 1 segundo...")); 
+    console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕕𝕖 𝕔𝕠𝕟𝕖𝕩𝕚𝕠́𝕟 👻
+│→ ${rainbowText("Hanako-kun no responde:")} 
+│➫ ${error.message}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+    console.log(`
+╭» 👻 ℝ𝕖𝕚𝕟𝕥𝕖𝕟𝕥𝕒𝕟𝕕𝕠 👻
+│→ ${rainbowText("Intentando invocar nuevamente en 1 segundo...")}
+│➫ Recuerda: "Para cada deseo, hay un precio que pagar"
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
     setTimeout(startConnection, 1000);
     return null; 
   } 
@@ -251,24 +324,20 @@ const mainBot = startConnection();
 // Manejo global de errores para evitar que el bot se cierre 
 process.on("uncaughtException", function (err) { 
   if (!err.message.includes("No SenderKeyRecord found")) { 
-    console.error(chalk.redBright("Hanako-kun encontró un error no manejado:"), err); 
+    console.log(`
+╭» 👻 𝔼𝕩𝕔𝕖𝕡𝕔𝕚𝕠́𝕟 𝕟𝕠 𝕔𝕠𝕟𝕥𝕣𝕠𝕝𝕒𝕕𝕒 👻
+│→ ${rainbowText("Hanako-kun encontró un problema:")}
+│➫ ${err}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
   } 
 });
 
 process.on("unhandledRejection", function (reason) { 
   if (!String(reason).includes("No SenderKeyRecord found")) { 
-    console.error(chalk.redBright("Hanako-kun rechazó una promesa:"), reason); 
+    console.log(`
+╭» 👻 ℝ𝕖𝕔𝕙𝕒𝕫𝕠 𝕟𝕠 𝕔𝕠𝕟𝕥𝕣𝕠𝕝𝕒𝕕𝕠 👻
+│→ ${rainbowText("Hanako-kun no pudo cumplir un deseo:")}
+│➫ ${reason}
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
   } 
-});
-
-// Mensaje de despedida al cerrar
-process.on("SIGINT", function() {
-  console.log(`
-${gradient.pastel("╔══════════════════════════════════════════════════╗")}
-${gradient.pastel("║")}  ${chalk.magenta("👻 𝕄𝕒𝕪𝕔𝕠𝕝𝔸𝕀 × 𝓗𝓪𝓷𝓪𝓴𝓸-𝓴𝓾𝓷 se despide 👻")}  ${gradient.pastel("║")}
-${gradient.pastel("╚══════════════════════════════════════════════════╝")}
-${chalk.cyan("(っ˘̩╭╮˘̩)っ")} ${chalk.yellow("Hanako-kun volverá al baño número 7...")} ${chalk.cyan("(っ˘̩╭╮˘̩)っ")}
-${gradient.rainbow("✧･ﾟ: *✧･ﾟ:* 𝐺𝓇𝒶𝒸𝒾𝒶𝓈 𝓅𝑜𝓇 𝒾𝓃𝓋𝑜𝒸𝒶𝓇𝓂𝑒 *:･ﾟ✧*:･ﾟ✧")}
-  `);
-  process.exit(0);
 });
