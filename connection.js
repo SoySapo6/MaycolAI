@@ -52,9 +52,6 @@ const store = createSimpleStore();
 bannerLog();
 
 async function startConnection() {
-  let retries = 0;
-  const maxRetries = 5;
-  
   try {
     const { state, saveCreds } = await useMultiFileAuthState(BAILEYS_CREDS_DIR);
     const { version } = await fetchLatestBaileysVersion();
@@ -83,101 +80,52 @@ async function startConnection() {
 
     // Enlazar nuestra store personalizada con el socket
     store.bind(socket.ev);
-    
-    // Variable para controlar si ya se ha solicitado el código
-    let codeRequested = false;
-    let waitingForAuth = false;
-    
+
     if (!socket.authState.creds.registered) {
-      warningLog("Archivos necesarios no Encontrados.");
+  warningLog("Archivos necesarios no Encontrados.");
 
-      let enableTutor = "s";
+  let enableTutor = "s";
 
-      do {
-        if (!["s", "n"].includes(enableTutor)) {
-          errorLog("Opción inválida");
-        }
-        enableTutor = await textInput("¿Deseas un tutorial? s/n : ");
-      } while (!["s", "n"].includes(enableTutor));
-
-      const phoneNumber = await textInput("Ingrese su número:");
-
-      if (!phoneNumber) {
-        errorLog("Número incorrecto, Ejemplo: 51921826291.");
-        process.exit(1);
-      }
-      
-      // Marcar que estamos esperando autenticación
-      waitingForAuth = true;
-
-      if (enableTutor === "s") {
-        await delay(1000);
-        tutorLog("Estamos generando su código... Recuerda:\n");
-        await delay(5000);
-        tutorLog("⌛ Generando código, aguarde.. 25% completado.\n");
-        await delay(10000);
-        tutorLog("⌛ Generando código, aguarde... 50% completado.\n", "cyan");
-        await delay(10000);
-        tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
-        await delay(10000);
-        tutorLog("✅ Generación completada! Enviando código...\n", "green");
-        await delay(5000);
-      }
-
-      try {
-        const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-        infoLog(`Código: ${code}`);
-        codeRequested = true;
-        
-        // Mostrar mensaje de espera para que el usuario introduzca el código en WhatsApp
-        infoLog("Por favor, introduce este código en la aplicación de WhatsApp cuando se te solicite.");
-        infoLog("Esperando a que completes la vinculación en WhatsApp...");
-      } catch (error) {
-        errorLog(`Error al solicitar código de emparejamiento: ${error.message}`);
-        return process.exit(1);
-      }
+  do {
+    if (!["s", "n"].includes(enableTutor)) {
+      errorLog("Opción inválida");
     }
+    enableTutor = await textInput("¿Deseas un tutorial? s/n : ");
+  } while (!["s", "n"].includes(enableTutor));
 
-    socket.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
+  const phoneNumber = await textInput("Ingrese su número:");
 
-      // Si estábamos esperando autenticación y hay un cambio en la conexión
-      if (waitingForAuth && update.qr === undefined && codeRequested) {
-        if (connection === "open") {
-          waitingForAuth = false;
-          successLog("¡Autenticación exitosa!");
-        }
-      }
+  if (!phoneNumber || !onlyNumbers(phoneNumber)) {
+    errorLog("Número incorrecto, Ejemplo: 51921826291.");
+    process.exit(1);
+  }
 
-      if (connection === "close") {
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
+  if (enableTutor === "s") {
+    await delay(1000);
+    tutorLog("Estamos generando su código... Recuerda:\n");
+    await delay(5000);
+    tutorLog("⌛ Generando código, aguarde.. 25% completado.\n");
+    await delay(10000);
+    tutorLog("⌛ Generando código, aguarde... 50% completado.\n", "cyan");
+    await delay(10000);
+    tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
+    await delay(10000);
+    tutorLog("✅ Generación completada! Escanee el código QR para continuar...\n", "green");
+    await delay(5000);
+  }
 
-        if (statusCode === DisconnectReason.loggedOut) {
-          errorLog("Borre la carpeta baileys, Bot desconectado Permanentemente");
-          process.exit(1);
-        } else {
-          warningLog("Conexión perdida. Intentando reconectar...");
-          
-          // Incrementar contador de reintentos
-          retries++;
-          
-          if (retries > maxRetries) {
-            errorLog(`Máximo de reintentos (${maxRetries}) alcanzado. Cerrando aplicación.`);
-            process.exit(1);
-          }
-          
-          // Esperar un tiempo proporcional al número de reintentos (backoff exponencial)
-          const reconnectDelay = Math.min(1000 * Math.pow(2, retries), 30000);
-          warningLog(`Reintentando en ${reconnectDelay/1000} segundos... (intento ${retries}/${maxRetries})`);
-          
-          setTimeout(startConnection, reconnectDelay);
-        }
-      } else if (connection === "open") {
-        // Reiniciar contador de reintentos cuando la conexión es exitosa
-        retries = 0;
-        
-        successLog("¡El bot está conectado exitosamente!");
+  // Aquí removemos la línea que pide código directamente para que el socket gestione el QR
+  // const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+  // infoLog(`Código: ${code}`);
 
+  // En cambio, podemos activar la impresión del QR en consola (temporal):
+  socket.ev.on('connection.update', (update) => {
+    if (update.qr) {
+      infoLog(`Escanee este código QR con el número ${phoneNumber}:`);
+      console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
+    }
+  });
+    }
         try {
           // Cambiar la biografía del perfil del bot
           const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
@@ -220,20 +168,8 @@ async function startConnection() {
     return socket;
   } catch (error) {
     errorLog(`Error en la conexión: ${error.message}`);
-    
-    // Incrementar contador de reintentos
-    retries++;
-    
-    if (retries > maxRetries) {
-      errorLog(`Máximo de reintentos (${maxRetries}) alcanzado. Cerrando aplicación.`);
-      process.exit(1);
-    }
-    
-    // Esperar un tiempo proporcional al número de reintentos (backoff exponencial)
-    const reconnectDelay = Math.min(1000 * Math.pow(2, retries), 30000);
-    warningLog(`Reintentando en ${reconnectDelay/1000} segundos... (intento ${retries}/${maxRetries})`);
-    
-    setTimeout(startConnection, reconnectDelay);
+    warningLog("Intentando reconectar en 1 segundo...");
+    setTimeout(startConnection, 1000);
   }
 }
 
