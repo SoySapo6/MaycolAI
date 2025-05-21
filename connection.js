@@ -125,8 +125,6 @@ async function startConnection() {
       console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
     }
   });
-    }
-  }
         try {
           // Cambiar la biografía del perfil del bot
           const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
