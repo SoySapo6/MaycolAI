@@ -92,7 +92,16 @@ customBanner();
 let pairingInProgress = false;
 
 async function startConnection() { 
-  try { 
+  try {
+    // Verificar si ya existe una conexión activa
+    if (global.socketConnection && global.socketConnection.isOnline) {
+      console.log(`
+╭» 👻 ℹ️ 𝕀𝕟𝕗𝕠𝕣𝕞𝕒𝕔𝕚ó𝕟 👻
+│→ ${rainbowText("Ya existe una conexión activa")}
+│➫ Evitando múltiples instancias de Hanako-kun
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+      return global.socketConnection;
+    } 
     const { state, saveCreds } = await useMultiFileAuthState(BAILEYS_CREDS_DIR); 
     const { version } = await fetchLatestBaileysVersion();
 
@@ -124,6 +133,9 @@ async function startConnection() {
     // Configurar los manejadores de eventos primero
     socket.ev.on("creds.update", saveCreds);
     
+    // Variable para controlar intentos de reconexión
+    global.reconnectTimeout = null;
+    
     socket.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
 
@@ -138,14 +150,41 @@ async function startConnection() {
 ╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
           process.exit(1);
         } else {
+          // Implementar un retraso exponencial para evitar spam de reconexiones
+          const reconnectDelay = global.reconnectAttempts ? Math.min(global.reconnectAttempts * 1000, 30000) : 1000;
+          global.reconnectAttempts = (global.reconnectAttempts || 0) + 1;
+          
           console.log(`
 ╭» 👻 𝔸𝕕𝕧𝕖𝕣𝕥𝕖𝕟𝕔𝕚𝕒 👻
 │→ ${rainbowText("Conexión perdida. El espíritu está inquieto...")}
-│➫ Intentando reconectar en el menor tiempo posible...
+│➫ Intento ${global.reconnectAttempts}. Reconectando en ${reconnectDelay/1000} segundos...
 ╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-          setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
+          
+          // Establecer un límite de 10 intentos antes de salir
+          if (global.reconnectAttempts > 10) {
+            console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕔𝕣í𝕥𝕚𝕔𝕠 👻
+│→ ${rainbowText("Demasiados intentos de reconexión...")}
+│➫ Por favor, verifica tu conexión e inicia el bot nuevamente
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+            process.exit(1);
+          }
+          
+          // Usar una variable global para el timeout para poder cancelarlo si es necesario
+          if (global.reconnectTimeout) clearTimeout(global.reconnectTimeout);
+          global.reconnectTimeout = setTimeout(startConnection, reconnectDelay);
         }
       } else if (connection === "open") {
+        // Resetear contador de reconexiones cuando se establece la conexión
+        global.reconnectAttempts = 0;
+        global.socketConnection = socket;
+        global.socketConnection.isOnline = true;
+        
+        // Limpiar cualquier timeout pendiente
+        if (global.reconnectTimeout) {
+          clearTimeout(global.reconnectTimeout);
+          global.reconnectTimeout = null;
+        }
         console.log(`
 ╭» 💫 ¡𝕊𝕦𝕔𝕖𝕤𝕠! 💫
 │→ ${rainbowText("¡El espíritu de Hanako-kun ha respondido a tu llamado!")}
@@ -173,6 +212,11 @@ async function startConnection() {
         socket.ev.on("messages.upsert", async ({ messages, type }) => {
           const msg = messages[0];
           if (!msg.message) return;
+
+          // Resetear contadores de reconexión cuando recibimos mensajes
+          global.reconnectAttempts = 0;
+          global.socketConnection = socket;
+          global.socketConnection.isOnline = true;
 
           const hora = moment().format("HH:mm:ss");
           const isGroup = msg.key.remoteJid.endsWith("@g.us");
@@ -311,18 +355,49 @@ async function startConnection() {
 │→ ${rainbowText("Hanako-kun no responde:")} 
 │➫ ${error.message}
 ╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+    
+    const reconnectDelay = global.reconnectAttempts ? Math.min(global.reconnectAttempts * 2000, 30000) : 2000;
+    global.reconnectAttempts = (global.reconnectAttempts || 0) + 1;
+    
     console.log(`
 ╭» 👻 ℝ𝕖𝕚𝕟𝕥𝕖𝕟𝕥𝕒𝕟𝕕𝕠 👻
-│→ ${rainbowText("Intentando invocar nuevamente en 1 segundo...")}
-│➫ Recuerda: "Para cada deseo, hay un precio que pagar"
+│→ ${rainbowText("Intentando invocar nuevamente en " + reconnectDelay/1000 + " segundos...")}
+│➫ Intento ${global.reconnectAttempts} de 10
 ╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-    setTimeout(startConnection, 1000);
+    
+    // Limitar intentos también aquí
+    if (global.reconnectAttempts > 10) {
+      console.log(`
+╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕔𝕣í𝕥𝕚𝕔𝕠 👻
+│→ ${rainbowText("Demasiados intentos de reconexión...")}
+│➫ Por favor, verifica tu conexión e inicia el bot nuevamente
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+      process.exit(1);
+    }
+    
+    // Usar una variable global para el timeout para poder cancelarlo si es necesario
+    if (global.reconnectTimeout) clearTimeout(global.reconnectTimeout);
+    global.reconnectTimeout = setTimeout(startConnection, reconnectDelay);
     return null; 
   } 
 }
 
-// Iniciar el bot
-const mainBot = startConnection();
+// Variables globales para el control de conexión y reconexión
+global.reconnectAttempts = 0;
+global.reconnectTimeout = null;
+global.socketConnection = null;
+
+// Iniciar el bot una única vez, evitando múltiples instancias
+if (!global.botInitialized) {
+  global.botInitialized = true;
+  const mainBot = startConnection();
+} else {
+  console.log(`
+╭» 👻 ℹ️ 𝕀𝕟𝕗𝕠𝕣𝕞𝕒𝕔𝕚ó𝕟 👻
+│→ ${rainbowText("El bot ya está inicializado")}
+│➫ Evitando múltiples instancias de Hanako-kun
+╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+}
 
 // Manejo global de errores para evitar que el bot se cierre 
 process.on("uncaughtException", function (err) { 
