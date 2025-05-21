@@ -122,18 +122,19 @@ async function startConnection() {
   socket.ev.on('connection.update', (update) => {
     if (update.qr) {
       infoLog(`Escanee este código QR con el número ${phoneNumber}:`);
-      console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
+      console.log(update.qr);
     }
   });
-    }
-        try {
-          // Cambiar la biografía del perfil del bot
-          const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
-          await socket.updateProfileStatus(nuevaBio);
-          successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
-        } catch (error) {
-          errorLog("❌ Error al actualizar la biografía del bot.");
-        }
+}  // <- Esta llave cierra el if correctamente
+
+try {
+  // Cambiar la biografía del perfil del bot
+  const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+  await socket.updateProfileStatus(nuevaBio);
+  successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
+} catch (error) {
+  errorLog("❌ Error al actualizar la biografía del bot.");
+}
 
         socket.ev.on("creds.update", saveCreds);
         socket.ev.on("messages.upsert", async ({ messages, type }) => {
