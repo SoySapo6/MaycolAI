@@ -1,7 +1,9 @@
 // Hecho por Maycol
 
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, isJidNewsletter, delay } = require("@whiskeysockets/baileys"); // Cambiado de "baileys" a "@whiskeysockets/baileys"
-const { makeInMemoryStore } = require("@whiskeysockets/baileys/lib/Store"); // Importando Store de forma separada
+// Importaciones principales de @whiskeysockets/baileys
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, 
+        isJidBroadcast, isJidStatusBroadcast, proto, isJidNewsletter, delay } = require("@whiskeysockets/baileys");
+
 const config = require("./config");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -13,7 +15,39 @@ const { textInput, infoLog, warningLog, errorLog, successLog, tutorLog, bannerLo
 const { welcome } = require("./welcome");
 
 const msgRetryCounterCache = new NodeCache();
-const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
+
+// Crear un logger silencioso para el store
+const storeLogger = pino({ level: 'fatal' });
+
+// Función para crear un almacén en memoria simple
+function createSimpleStore() {
+  const messages = {};
+  
+  return {
+    loadMessage: async (jid, id) => {
+      return messages[`${jid}:${id}`] || null;
+    },
+    
+    storeMessage: async (msg) => {
+      if (msg.key && msg.key.remoteJid && msg.key.id) {
+        messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
+      }
+    },
+    
+    bind: (ev) => {
+      ev.on('messages.upsert', ({ messages: newMessages }) => {
+        for (const msg of newMessages) {
+          if (msg.key && msg.key.remoteJid && msg.key.id) {
+            messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
+          }
+        }
+      });
+    }
+  };
+}
+
+// Crear un almacén simple
+const store = createSimpleStore();
 
 bannerLog();
 
@@ -35,11 +69,17 @@ async function startConnection() {
       msgRetryCounterCache,
       shouldSyncHistoryMessage: () => false,
       getMessage: async (key) => {
-        if (!store) return proto.Message.fromObject({});
-        const msg = await store.loadMessage(key.remoteJid, key.id);
-        return msg ? msg.message : undefined;
+        try {
+          const msg = await store.loadMessage(key.remoteJid, key.id);
+          return msg ? msg.message : undefined;
+        } catch (error) {
+          return proto.Message.fromObject({});
+        }
       },
     });
+
+    // Enlazar nuestra store personalizada con el socket
+    store.bind(socket.ev);
 
     if (!socket.authState.creds.registered) {
       warningLog("Archivos necesarios no Encontrados.");
