@@ -128,15 +128,20 @@ async function startConnection() {
           const tipoMensaje = mensajeTexto ? mensajeTexto : "Contenido Multimedia o Corrupto";
           const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
 
-          console.log(`✨🗨️ *Nuevo Mensaje* 💬
+          console.log(`
+╔════════════════════════════╗
+║      🔮 ✧ 𝑵𝒖𝒆𝒗𝒐 𝑴𝒆𝒏𝒔𝒂𝒋𝒆 ✧ 🔮     ║
+╚════════════════════════════╝
 
-⏰ | Hora: ${hora} | ⏰
+⏰ (⁠｡⁠･⁠ω⁠･⁠｡⁠)ﾉ⁠♡ 𝑯𝒐𝒓𝒂: ${hora}
+✉️ ⊂(⁠(⁠・⁠▽⁠・⁠)⁠)⁠⊃ 𝑻𝒊𝒑𝒐 𝒅𝒆 𝑴𝒆𝒏𝒔𝒂𝒋𝒆: ${tipoMensaje}
+✧༚ 𝑵𝒖́𝒎𝒆𝒓𝒐/𝑮𝒓𝒖𝒑𝒐: ${destino} ༚✧
 
-🌿💚 | Mensaje: ${tipoMensaje} | 💚🌿
-
-👥📞 | Número/Grupo: ${destino} | 📞👥
-
-🔮💫 ${config.BOT_NAME} te observa... 🔮💫\n`);
+━━━━━༺༻━━━━━
+🚽 *${config.BOT_NAME}* te observa desde el baño…
+¡𝑪𝒖𝒊𝒅𝒂𝒅𝒐 𝒔𝒊 𝒔𝒖𝒔𝒖𝒓𝒓𝒂 𝒕𝒖 𝒏𝒐𝒎𝒃𝒓𝒆! ༼⁠⁰⁠o⁠⁰⁠；༽
+━━━━━༺༻━━━━━
+`);
 
           runLite({ socket, data: { messages, type } });
         });
