@@ -1,7 +1,4 @@
-// ╔══════════════════════════════════════════════════════════╗
-// ║ 👻 ✧ 𝐇𝐚𝐧𝐚𝐤𝐨-𝐤𝐮𝐧 𝐌𝐚𝐲𝐜𝐨𝐥𝐀𝐈 𝐁𝐨𝐭 ✧ 👻 ║
-// ║ Hecho por Maycol - Adaptado con temática Hanako-kun   ║
-// ╚══════════════════════════════════════════════════════════╝
+// Hecho por Maycol
 
 // Importaciones principales de @whiskeysockets/baileys 
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, isJidNewsletter, delay } = require("@whiskeysockets/baileys");
@@ -23,7 +20,6 @@ const {
   bannerLog, 
 } = require("./utils/terminal");
 const { welcome } = require("./welcome");
-const chalk = require('chalk'); // Para textos de colores
 
 const msgRetryCounterCache = new NodeCache();
 
@@ -60,48 +56,10 @@ function createSimpleStore() {
 // Crear un almacén simple 
 const store = createSimpleStore();
 
-// Función para generar texto arcoíris
-const rainbowText = (text) => {
-  const colors = ['red', 'yellow', 'green', 'cyan', 'blue', 'magenta'];
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    const color = colors[i % colors.length];
-    result += chalk[color](text[i]);
-  }
-  return result;
-};
-
-// Banner personalizado de Hanako-kun
-const customBanner = () => {
-  console.log(`
-╔═════════════════════════════════════════════════════════════════╗
-║  👻 ♥‿♥ 𝐇𝐚𝐧𝐚𝐤𝐨-𝐤𝐮𝐧 𝐌𝐚𝐲𝐜𝐨𝐥𝐀𝐈 𝐁𝐨𝐭 ♥‿♥ 👻  ║
-╠═════════════════════════════════════════════════════════════════╣
-║  ◦•●◉✿ "𝘌𝘷𝘦𝘳𝘺 𝘭𝘦𝘨𝘦𝘯𝘥 𝘩𝘢𝘴 𝘪𝘵𝘴 𝘰𝘸𝘯 𝘣𝘰𝘶𝘯𝘥𝘢𝘳𝘪𝘦𝘴" ✿◉●•◦  ║
-║  ⋆｡°✩ 𝗘𝗹 𝗯𝗼𝘁 𝗱𝗲𝗹 𝗯𝗮𝗻̃𝗼 𝗲𝘀𝘁𝗮́ 𝗹𝗶𝘀𝘁𝗼 𝗽𝗮𝗿𝗮 𝗰𝘂𝗺𝗽𝗹𝗶𝗿 𝘁𝘂𝘀 𝗱𝗲𝘀𝗲𝗼𝘀! ✩°｡⋆ ║
-╚═════════════════════════════════════════════════════════════════╝
-  `);
-};
-
-// En lugar de reasignar bannerLog (que es una constante), 
-// llamamos directamente a nuestro banner personalizado
-
-// Mostrar el banner personalizado al inicio
-customBanner();
-
-let pairingInProgress = false;
+bannerLog();
 
 async function startConnection() { 
-  try {
-    // Verificar si ya existe una conexión activa
-    if (global.socketConnection && global.socketConnection.isOnline) {
-      console.log(`
-╭» 👻 ℹ️ 𝕀𝕟𝕗𝕠𝕣𝕞𝕒𝕔𝕚ó𝕟 👻
-│→ ${rainbowText("Ya existe una conexión activa")}
-│➫ Evitando múltiples instancias de Hanako-kun
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-      return global.socketConnection;
-    } 
+  try { 
     const { state, saveCreds } = await useMultiFileAuthState(BAILEYS_CREDS_DIR); 
     const { version } = await fetchLatestBaileysVersion();
 
@@ -133,9 +91,6 @@ async function startConnection() {
     // Configurar los manejadores de eventos primero
     socket.ev.on("creds.update", saveCreds);
     
-    // Variable para controlar intentos de reconexión
-    global.reconnectTimeout = null;
-    
     socket.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
 
@@ -143,80 +98,28 @@ async function startConnection() {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
 
         if (statusCode === DisconnectReason.loggedOut) {
-          console.log(`
-╭» 👻 ¡𝕆𝕙 𝕟𝕠! 👻
-│→ ${rainbowText("El espíritu de Hanako-kun ha abandonado el baño...")}
-│➫ Borre la carpeta baileys, Bot desconectado Permanentemente
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          errorLog("Borre la carpeta baileys, Bot desconectado Permanentemente");
           process.exit(1);
         } else {
-          // Implementar un retraso exponencial para evitar spam de reconexiones
-          const reconnectDelay = global.reconnectAttempts ? Math.min(global.reconnectAttempts * 1000, 30000) : 1000;
-          global.reconnectAttempts = (global.reconnectAttempts || 0) + 1;
-          
-          console.log(`
-╭» 👻 𝔸𝕕𝕧𝕖𝕣𝕥𝕖𝕟𝕔𝕚𝕒 👻
-│→ ${rainbowText("Conexión perdida. El espíritu está inquieto...")}
-│➫ Intento ${global.reconnectAttempts}. Reconectando en ${reconnectDelay/1000} segundos...
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-          
-          // Establecer un límite de 10 intentos antes de salir
-          if (global.reconnectAttempts > 10) {
-            console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕔𝕣í𝕥𝕚𝕔𝕠 👻
-│→ ${rainbowText("Demasiados intentos de reconexión...")}
-│➫ Por favor, verifica tu conexión e inicia el bot nuevamente
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            process.exit(1);
-          }
-          
-          // Usar una variable global para el timeout para poder cancelarlo si es necesario
-          if (global.reconnectTimeout) clearTimeout(global.reconnectTimeout);
-          global.reconnectTimeout = setTimeout(startConnection, reconnectDelay);
+          warningLog("Conexión perdida. Intentando reconectar en el menor tiempo posible...");
+          setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
         }
       } else if (connection === "open") {
-        // Resetear contador de reconexiones cuando se establece la conexión
-        global.reconnectAttempts = 0;
-        global.socketConnection = socket;
-        global.socketConnection.isOnline = true;
-        
-        // Limpiar cualquier timeout pendiente
-        if (global.reconnectTimeout) {
-          clearTimeout(global.reconnectTimeout);
-          global.reconnectTimeout = null;
-        }
-        console.log(`
-╭» 💫 ¡𝕊𝕦𝕔𝕖𝕤𝕠! 💫
-│→ ${rainbowText("¡El espíritu de Hanako-kun ha respondido a tu llamado!")}
-│➫ El bot está conectado exitosamente
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+        successLog("¡El bot está conectado exitosamente!");
 
         try {
           // Cambiar la biografía del perfil del bot
-          const nuevaBio = "👻⋆｡°✩ [ʜᴀɴᴀᴋᴏ-ᴋᴜɴ ᴍᴀʏᴄᴏʟᴀɪ]✩°｡⋆ ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+          const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
           await socket.updateProfileStatus(nuevaBio);
-          console.log(`
-╭» 💫 ¡ℂ𝕒𝕞𝕓𝕚𝕠 𝕖𝕩𝕚𝕥𝕠𝕤𝕠! 💫
-│→ ${rainbowText("Biografía del bot actualizada a:")} 
-│➫ ${nuevaBio}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
         } catch (error) {
-          console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 👻
-│→ ${rainbowText("No pude cambiar mi biografía...")}
-│➫ Error al actualizar la biografía del bot
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+          errorLog("❌ Error al actualizar la biografía del bot.");
         }
 
         // Configurar manejadores de eventos para mensajes cuando la conexión está abierta
         socket.ev.on("messages.upsert", async ({ messages, type }) => {
           const msg = messages[0];
           if (!msg.message) return;
-
-          // Resetear contadores de reconexión cuando recibimos mensajes
-          global.reconnectAttempts = 0;
-          global.socketConnection = socket;
-          global.socketConnection.isOnline = true;
 
           const hora = moment().format("HH:mm:ss");
           const isGroup = msg.key.remoteJid.endsWith("@g.us");
@@ -226,18 +129,18 @@ async function startConnection() {
           const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
 
           console.log(`
-╔══════════════════════════════════════╗
-║ 👻 ✧ 𝓗𝓪𝓷𝓪𝓴𝓸-𝓴𝓾𝓷 𝓡𝓮𝓬𝓲𝓫𝓲𝓸́ 𝓜𝓮𝓷𝓼𝓪𝓳𝓮 ✧ 👻 ║
-╚══════════════════════════════════════╝
+╔════════════════════╗
+║ 🔮 ✧ 𝑵𝒖𝒆𝒗𝒐 𝑴𝒆𝒏𝒔𝒂𝒋𝒆 ✧ 🔮 ║
+╚════════════════════╝
 
-⏰ (っ◔◡◔)っ ${rainbowText("𝑯𝒐𝒓𝒂:")}: ${hora}
-✉️ ⊂(◉‿◉)つ ${rainbowText("𝑻𝒊𝒑𝒐 𝒅𝒆 𝑴𝒆𝒏𝒔𝒂𝒋𝒆:")}: ${tipoMensaje}
-༄ ₊˚ ${rainbowText("𝑵𝒖́𝒎𝒆𝒓𝒐/𝑮𝒓𝒖𝒑𝒐:")}: ${destino} ˚₊ ༄
+⏰ (⁠｡⁠･⁠ω⁠･⁠｡⁠)ﾉ⁠♡ 𝑯𝒐𝒓𝒂: ${hora}
+✉️ ⊂(⁠(⁠・⁠▽⁠・⁠)⁠)⁠⊃ 𝑻𝒊𝒑𝒐 𝒅𝒆 𝑴𝒆𝒏𝒔𝒂𝒋𝒆: ${tipoMensaje}
+✧༚ 𝑵𝒖́𝒎𝒆𝒓𝒐/𝑮𝒓𝒖𝒑𝒐: ${destino} ༚✧
 
-━━━━━༻✧༺━━━━━
-👻 *${config.BOT_NAME}* te observa desde el baño del tercer piso...
-"${rainbowText("¡Concede mi deseo, Hanako-kun!")}" ₊˚✧
-━━━━━༻✧༺━━━━━
+━━━━━༺༻━━━━━
+🚽 *${config.BOT_NAME}* te observa desde el baño…
+¡𝑪𝒖𝒊𝒅𝒂𝒅𝒐 𝒔𝒊 𝒔𝒖𝒔𝒖𝒓𝒓𝒂 𝒕𝒖 𝒏𝒐𝒎𝒃𝒓𝒆! ༼⁠⁰⁠o⁠⁰⁠；༽
+━━━━━༺༻━━━━━
 `);
 
           runLite({ socket, data: { messages, type } });
@@ -248,174 +151,69 @@ async function startConnection() {
     });
 
     // Proceso de vinculación (si es necesario)
-    if (!socket.authState.creds.registered && !pairingInProgress) {
-      pairingInProgress = true;
-      
-      console.log(`
-╭» 👻 𝔸𝕕𝕧𝕖𝕣𝕥𝕖𝕟𝕔𝕚𝕒 👻
-│→ ${rainbowText("¡Hanako-kun necesita ser invocado!")}
-│➫ Archivos necesarios no Encontrados.
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+    if (!socket.authState.creds.registered) {
+      warningLog("Archivos necesarios no Encontrados.");
 
-      // Mostrar el banner personalizado de nuevo para asegurarnos que esté visible
-      customBanner();
+      let enableTutor = "s";
 
-      const startPairing = async () => {
-        try {
-          const enableTutor = await textInput(`[👻 ${rainbowText("𝕄𝕒𝕪𝕔𝕠𝕝𝔸𝕀")}: INPUT] ¿Deseas un tutorial? s/n : `);
-          
-          if (!["s", "n"].includes(enableTutor.toLowerCase())) {
-            console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 👻
-│→ ${rainbowText("Opción inválida, debes escribir 's' o 'n'")}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            return await startPairing();
-          }
-
-          const phoneNumber = await textInput(`[👻 ${rainbowText("𝕄𝕒𝕪𝕔𝕠𝕝𝔸𝕀")}: INPUT] Ingrese su número: `);
-
-          if (!phoneNumber || !onlyNumbers(phoneNumber)) {
-            console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 👻
-│→ ${rainbowText("Número incorrecto, Ejemplo: 51921826291.")}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            process.exit(1);
-          }
-
-          if (enableTutor.toLowerCase() === "s") {
-            await delay(1000);
-            console.log(`
-╭» 👻 𝕋𝕦𝕥𝕠𝕣𝕚𝕒𝕝 👻
-│→ ${rainbowText("Estamos invocando a Hanako-kun... Recuerda:")}
-│➫ Para invocar correctamente, golpea la puerta del baño 3 veces y di su nombre
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            await delay(5000);
-            console.log(`
-╭» 👻 ℙ𝕣𝕠𝕘𝕣𝕖𝕤𝕠 👻
-│→ ${rainbowText("⌛ Preparando ritual de invocación...")} 
-│➫ 25% completado
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            await delay(8000);
-            console.log(`
-╭» 👻 ℙ𝕣𝕠𝕘𝕣𝕖𝕤𝕠 👻
-│→ ${rainbowText("⌛ Buscando a Hanako-kun en el baño...")}
-│➫ 50% completado
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            await delay(8000);
-            console.log(`
-╭» 👻 ℙ𝕣𝕠𝕘𝕣𝕖𝕤𝕠 👻
-│→ ${rainbowText("⌛ Hanako-kun está escuchando...")}
-│➫ 75% completado
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            await delay(8000);
-            console.log(`
-╭» 👻 ¡𝕊𝕦𝕔𝕖𝕤𝕠! 👻
-│→ ${rainbowText("✅ ¡Hanako-kun ha sido invocado!")}
-│➫ Enviando código de vinculación...
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-            await delay(3000);
-          }
-
-          const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-          console.log(`
-╭» 👻 ℂ𝕠́𝕕𝕚𝕘𝕠 𝕕𝕖 𝕧𝕚𝕟𝕔𝕦𝕝𝕒𝕔𝕚𝕠́𝕟 👻
-│→ ${rainbowText("Tu código para invocar a Hanako-kun es:")}
-│➫ ${code}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-          
-          console.log(`
-╭» 👻 𝕀𝕟𝕤𝕥𝕣𝕦𝕔𝕔𝕚𝕠𝕟𝕖𝕤 👻
-│→ ${rainbowText("Por favor, complete el proceso de vinculación")}
-│➫ Ingresa el código en tu WhatsApp para completar el ritual
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-          console.log(`
-╭» 👻 𝔼𝕤𝕡𝕖𝕣𝕒𝕟𝕕𝕠 👻
-│→ ${rainbowText("Esperando a que se complete la invocación...")}
-│➫ Hanako-kun está ansioso por conocerte
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-          
-        } catch (error) {
-          console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕕𝕦𝕣𝕒𝕟𝕥𝕖 𝕧𝕚𝕟𝕔𝕦𝕝𝕒𝕔𝕚𝕠́𝕟 👻
-│→ ${rainbowText("Algo ha interrumpido la invocación:")}
-│➫ ${error.message}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-          pairingInProgress = false;
+      do {
+        if (!["s", "n"].includes(enableTutor)) {
+          errorLog("Opción inválida");
         }
-      };
+        enableTutor = await textInput("¿Deseas un tutorial? s/n : ");
+      } while (!["s", "n"].includes(enableTutor));
 
-      await startPairing();
-      pairingInProgress = false;
+      const phoneNumber = await textInput("Ingrese su número:");
+
+      if (!phoneNumber) {
+        errorLog("Número incorrecto, Ejemplo: 51921826291.");
+        process.exit(1);
+      }
+
+      if (enableTutor === "s") {
+        await delay(1000);
+        tutorLog("Estamos generando su código... Recuerda:\n");
+        await delay(5000);
+        tutorLog("⌛ Generando código, aguarde.. 25% completado.\n");
+        await delay(10000);
+        tutorLog("⌛ Generando código, aguarde... 50% completado.\n", "cyan");
+        await delay(10000);
+        tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
+        await delay(10000);
+        tutorLog("✅ Generación completada! Enviando código...\n", "green");
+        await delay(5000);
+      }
+
+      const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+      infoLog(`Código: ${code}`);
+      
+      // Informar al usuario que debe completar el proceso de vinculación
+      successLog("Por favor, complete el proceso de vinculación ingresando el código en su WhatsApp.");
+      successLog("Esperando a que se complete la vinculación...");
     }
 
+    // No devuelvas el socket dentro del event listener
     return socket;
   } catch (error) { 
-    console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕕𝕖 𝕔𝕠𝕟𝕖𝕩𝕚𝕠́𝕟 👻
-│→ ${rainbowText("Hanako-kun no responde:")} 
-│➫ ${error.message}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-    
-    const reconnectDelay = global.reconnectAttempts ? Math.min(global.reconnectAttempts * 2000, 30000) : 2000;
-    global.reconnectAttempts = (global.reconnectAttempts || 0) + 1;
-    
-    console.log(`
-╭» 👻 ℝ𝕖𝕚𝕟𝕥𝕖𝕟𝕥𝕒𝕟𝕕𝕠 👻
-│→ ${rainbowText("Intentando invocar nuevamente en " + reconnectDelay/1000 + " segundos...")}
-│➫ Intento ${global.reconnectAttempts} de 10
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-    
-    // Limitar intentos también aquí
-    if (global.reconnectAttempts > 10) {
-      console.log(`
-╭» 👻 𝔼𝕣𝕣𝕠𝕣 𝕔𝕣í𝕥𝕚𝕔𝕠 👻
-│→ ${rainbowText("Demasiados intentos de reconexión...")}
-│➫ Por favor, verifica tu conexión e inicia el bot nuevamente
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-      process.exit(1);
-    }
-    
-    // Usar una variable global para el timeout para poder cancelarlo si es necesario
-    if (global.reconnectTimeout) clearTimeout(global.reconnectTimeout);
-    global.reconnectTimeout = setTimeout(startConnection, reconnectDelay);
+    errorLog(`Error en la conexión: ${error.message}`); 
+    warningLog("Intentando reconectar en 1 segundo..."); 
+    setTimeout(startConnection, 1000);
     return null; 
   } 
 }
 
-// Variables globales para el control de conexión y reconexión
-global.reconnectAttempts = 0;
-global.reconnectTimeout = null;
-global.socketConnection = null;
-
-// Iniciar el bot una única vez, evitando múltiples instancias
-if (!global.botInitialized) {
-  global.botInitialized = true;
-  const mainBot = startConnection();
-} else {
-  console.log(`
-╭» 👻 ℹ️ 𝕀𝕟𝕗𝕠𝕣𝕞𝕒𝕔𝕚ó𝕟 👻
-│→ ${rainbowText("El bot ya está inicializado")}
-│➫ Evitando múltiples instancias de Hanako-kun
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
-}
+// Iniciar el bot
+const mainBot = startConnection();
 
 // Manejo global de errores para evitar que el bot se cierre 
 process.on("uncaughtException", function (err) { 
   if (!err.message.includes("No SenderKeyRecord found")) { 
-    console.log(`
-╭» 👻 𝔼𝕩𝕔𝕖𝕡𝕔𝕚𝕠́𝕟 𝕟𝕠 𝕔𝕠𝕟𝕥𝕣𝕠𝕝𝕒𝕕𝕒 👻
-│→ ${rainbowText("Hanako-kun encontró un problema:")}
-│➫ ${err}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+    console.error("Uncaught Exception:", err); 
   } 
 });
 
 process.on("unhandledRejection", function (reason) { 
   if (!String(reason).includes("No SenderKeyRecord found")) { 
-    console.log(`
-╭» 👻 ℝ𝕖𝕔𝕙𝕒𝕫𝕠 𝕟𝕠 𝕔𝕠𝕟𝕥𝕣𝕠𝕝𝕒𝕕𝕠 👻
-│→ ${rainbowText("Hanako-kun no pudo cumplir un deseo:")}
-│➫ ${reason}
-╰― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― ― 〄 ↺`);
+    console.error("Unhandled Rejection:", reason); 
   } 
 });
