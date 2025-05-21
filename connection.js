@@ -1,6 +1,7 @@
 // Hecho por Maycol
 
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter, delay, } = require("@whiskeysockets/baileys"); // Cambiado de "baileys" a "@whiskeysockets/baileys"
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, isJidNewsletter, delay } = require("@whiskeysockets/baileys"); // Cambiado de "baileys" a "@whiskeysockets/baileys"
+const { makeInMemoryStore } = require("@whiskeysockets/baileys/lib/Store"); // Importando Store de forma separada
 const config = require("./config");
 const moment = require("moment");
 const NodeCache = require("node-cache");
