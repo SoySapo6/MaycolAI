@@ -17,12 +17,6 @@ function print_ascii() {
     echo -e "$Reset"  
 }  
 
-# Verificar si mpv está instalado
-if ! command -v mpv &> /dev/null; then
-    echo -e "$Red[Hanako-kun]: mpv no está instalado, instalando...$Reset"
-    pkg update -y && pkg install mpv -y && clear
-fi
-
 # Presentación mágica
 CHARACTER_1="Hanako-kun $Yellow✨"
 CHARACTER_2="Nene Yashiro $Purple♡"
