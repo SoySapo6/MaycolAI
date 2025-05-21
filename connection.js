@@ -1,17 +1,6 @@
 // Hecho por Maycol
 
-const {
-  default: makeWASocket,
-  DisconnectReason,
-  useMultiFileAuthState,
-  fetchLatestBaileysVersion,
-  isJidBroadcast,
-  isJidStatusBroadcast,
-  proto,
-  makeInMemoryStore,
-  isJidNewsletter,
-  delay,
-} = require("baileys");
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter, delay, } = require("@whiskeysockets/baileys"); // Cambiado de "baileys" a "@whiskeysockets/baileys"
 const config = require("./config");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -19,15 +8,7 @@ const pino = require("pino");
 const { BAILEYS_CREDS_DIR } = require("./config");
 const { runLite } = require("./index");
 const { onlyNumbers } = require("./utils/functions");
-const {
-  textInput,
-  infoLog,
-  warningLog,
-  errorLog,
-  successLog,
-  tutorLog,
-  bannerLog,
-} = require("./utils/terminal");
+const { textInput, infoLog, warningLog, errorLog, successLog, tutorLog, bannerLog, } = require("./utils/terminal");
 const { welcome } = require("./welcome");
 
 const msgRetryCounterCache = new NodeCache();
@@ -43,7 +24,6 @@ async function startConnection() {
     const socket = makeWASocket({
       version,
       logger: pino({ level: "error" }), // solo muestra errores importantes
-      store: makeInMemoryStore({ logger: pino().child({ level: "silent" }) }), // silencia el store
       printQRInTerminal: false,
       defaultQueryTimeoutMs: 60 * 1000,
       auth: state,
@@ -108,7 +88,7 @@ async function startConnection() {
           process.exit(1);
         } else {
           warningLog("Conexión perdida. Intentando reconectar en el menor tiempo posible...");
-          setTimeout(startConnection, 300); // Espera 2 segundos antes de reconectar
+          setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
         }
       } else if (connection === "open") {
         successLog("¡El bot está conectado exitosamente!");
@@ -135,10 +115,14 @@ async function startConnection() {
           const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
 
           console.log(`✨🗨️ *Nuevo Mensaje* 💬
-- ⏰ | *Hora:* ${hora} | ⏰
-- 🌿💚 | *Mensaje:* ${tipoMensaje} | 💚🌿
-- 👥📞 | *Número/Grupo:* ${destino} | 📞👥
-- 🔮💫 *${config.BOT_NAME} te observa...* 🔮💫\n`);
+
+⏰ | Hora: ${hora} | ⏰
+
+🌿💚 | Mensaje: ${tipoMensaje} | 💚🌿
+
+👥📞 | Número/Grupo: ${destino} | 📞👥
+
+🔮💫 ${config.BOT_NAME} te observa... 🔮💫\n`);
 
           runLite({ socket, data: { messages, type } });
         });
