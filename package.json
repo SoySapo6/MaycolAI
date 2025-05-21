@@ -16,14 +16,17 @@
   "author": "Dev Gui",
   "license": "MIT",
   "dependencies": {
+    "@whiskeysockets/baileys": "^6.5.0",
     "axios": "^1.7.7",
-    "@whiskeysockets/baileys": "github:ds6/meta",
     "correios-brasil": "^3.0.6",
     "gemini-chatbot": "^1.0.0",
     "hercai": "^12.4.0",
     "node-cache": "^5.1.2",
-    "pino": "^9.5.0",
+    "pino": "^8.16.0",
     "moment": "^2.29.4",
-    "qrcode": "^1.5.1"
+    "qrcode": "^1.5.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
