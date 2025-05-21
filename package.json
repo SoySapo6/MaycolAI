@@ -25,7 +25,8 @@
     "pino": "^8.16.0",
     "moment": "^2.29.4",
     "qrcode": "^1.5.3",
-    "delay": "^5.0.0"
+    "delay": "^5.0.0",
+    "gradient-string": "^2.0.0"
   },
   "engines": {
     "node": ">=16.0.0"
