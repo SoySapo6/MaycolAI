@@ -81,7 +81,7 @@ async function startConnection() {
     // Enlazar nuestra store personalizada con el socket
     store.bind(socket.ev);
 
-    if (!socket.authState.creds?.pairingCode && !socket.authState.creds?.signedIdentityKey) {
+    if (!socket.authState.creds.registered) {
   warningLog("Archivos necesarios no Encontrados.");
 
   let enableTutor = "s";
@@ -95,7 +95,7 @@ async function startConnection() {
 
   const phoneNumber = await textInput("Ingrese su número:");
 
-  if (!phoneNumber || !onlyNumbers(phoneNumber)) {
+  if (!phoneNumber) {
     errorLog("Número incorrecto, Ejemplo: 51921826291.");
     process.exit(1);
   }
@@ -110,43 +110,55 @@ async function startConnection() {
     await delay(10000);
     tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
     await delay(10000);
-    tutorLog("✅ Generación completada! Escanee el código QR para continuar...\n", "green");
+    tutorLog("✅ Generación completada! Enviando código...\n", "green");
     await delay(5000);
   }
 
-  // Aquí removemos la línea que pide código directamente para que el socket gestione el QR
-  // const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-  // infoLog(`Código: ${code}`);
+  const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+  infoLog(`Código: ${code}`);
 
-  // En cambio, podemos activar la impresión del QR en consola (temporal):
-  socket.ev.on('connection.update', (update) => {
-    if (update.qr) {
-      infoLog(`Escanee este código QR con el número ${phoneNumber}:`);
-      console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
+  // Aquí esperamos que se conecte
+  infoLog("Esperando a que escanees el código y se complete la vinculación...");
+}
+
+// Ahora sí escucha updates
+socket.ev.on("connection.update", async (update) => {
+  const { connection, lastDisconnect } = update;
+
+  if (connection === "close") {
+    const statusCode = lastDisconnect?.error?.output?.statusCode;
+
+    if (statusCode === DisconnectReason.loggedOut) {
+      errorLog("Borre la carpeta baileys, Bot desconectado Permanentemente");
+      process.exit(1);
+    } else {
+      warningLog("Conexión perdida. Intentando reconectar en el menor tiempo posible...");
+      setTimeout(startConnection, 300);
     }
-  });
-        try {
-          // Cambiar la biografía del perfil del bot
-          const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
-          await socket.updateProfileStatus(nuevaBio);
-          successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
-        } catch (error) {
-          errorLog("❌ Error al actualizar la biografía del bot.");
-        }
+  } else if (connection === "open") {
+    successLog("¡El bot está conectado exitosamente!");
 
-        socket.ev.on("creds.update", saveCreds);
-        socket.ev.on("messages.upsert", async ({ messages, type }) => {
-          const msg = messages[0];
-          if (!msg.message) return;
+    try {
+      const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+      await socket.updateProfileStatus(nuevaBio);
+      successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
+    } catch (error) {
+      errorLog("❌ Error al actualizar la biografía del bot.");
+    }
 
-          const hora = moment().format("HH:mm:ss");
-          const isGroup = msg.key.remoteJid.endsWith("@g.us");
-          const senderID = isGroup ? msg.key.participant : msg.key.remoteJid;
-          const mensajeTexto = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
-          const tipoMensaje = mensajeTexto ? mensajeTexto : "Contenido Multimedia o Corrupto";
-          const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
+    socket.ev.on("creds.update", saveCreds);
+    socket.ev.on("messages.upsert", async ({ messages, type }) => {
+      const msg = messages[0];
+      if (!msg.message) return;
 
-          console.log(`✨🗨️ *Nuevo Mensaje* 💬
+      const hora = moment().format("HH:mm:ss");
+      const isGroup = msg.key.remoteJid.endsWith("@g.us");
+      const senderID = isGroup ? msg.key.participant : msg.key.remoteJid;
+      const mensajeTexto = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
+      const tipoMensaje = mensajeTexto ? mensajeTexto : "Contenido Multimedia o Corrupto";
+      const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
+
+      console.log(`✨🗨️ *Nuevo Mensaje* 💬
 
 ⏰ | Hora: ${hora} | ⏰
 
@@ -156,10 +168,12 @@ async function startConnection() {
 
 🔮💫 ${config.BOT_NAME} te observa... 🔮💫\n`);
 
-          runLite({ socket, data: { messages, type } });
-        });
-        socket.ev.on("group-participants.update", (data) => welcome({ socket, data }));
+      runLite({ socket, data: { messages, type } });
+    });
 
+    socket.ev.on("group-participants.update", (data) => welcome({ socket, data }));
+  }
+});
         return socket;
       }
     });
