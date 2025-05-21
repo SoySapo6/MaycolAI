@@ -16,7 +16,7 @@
   "author": "Dev Gui",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys": "github:ds6/meta",
+    "@whiskeysockets/baileys": "github:SoySapo6/MayBailyes",
     "axios": "^1.7.7",
     "correios-brasil": "^3.0.6",
     "gemini-chatbot": "^1.0.0",
