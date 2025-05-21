@@ -11,7 +11,8 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { writeFile } = require("node:fs/promises");
 
-const { downloadContentFromMessage, delay } = require("baileys");
+// Cambiado de baileys a @whiskeysockets/baileys
+const { downloadContentFromMessage, delay } = require("@whiskeysockets/baileys");
 const {
   TEMP_DIR,
   PREFIX,
@@ -72,7 +73,7 @@ function loadLiteFunctions({ socket: lite, data }) {
 
   const recordState = async () => {
     await delay(TIMEOUT_IN_MILLISECONDS_BY_ACTION);
-    await lite.sendPresenceUpdate("recording", sendToJid);
+    await lite.sendPresenceUpdate("recording", from); // Corregido de sendToJid a from
     await delay(TIMEOUT_IN_MILLISECONDS_BY_ACTION);
   };
 
@@ -134,7 +135,7 @@ function loadLiteFunctions({ socket: lite, data }) {
 
   const waitReply = async (text) => {
     await waitReact();
-    return await reply(`⏳ Aguarde! ${text || waitMessage}`);
+    return await reply(`⏳ Aguarde! ${text || "Procesando..."}`); // Añadido valor por defecto
   };
 
   const warningReply = async (text) => {
@@ -163,7 +164,7 @@ function loadLiteFunctions({ socket: lite, data }) {
       {
         sticker: { url },
       },
-      { url, quoted: info }
+      { quoted: info }
     );
   };
 
@@ -199,6 +200,7 @@ function loadLiteFunctions({ socket: lite, data }) {
           await stickerFromFile(outputPath);
 
           deleteTempFile(inputPath);
+          deleteTempFile(outputPath); // Añadido para limpiar el archivo de salida
         }
       );
     } else {
@@ -217,9 +219,9 @@ function loadLiteFunctions({ socket: lite, data }) {
         deleteTempFile(inputPath);
 
         throw new DangerError(
-          `¡Error al convertir la imagen en pegatina!${sizeInSeconds} segundos!
+          `¡Error al convertir el video en pegatina! El video debe ser menor a ${sizeInSeconds} segundos!
 
-Envie um vídeo menor!`
+Envie un video más corto!`
         );
       }
 
@@ -229,7 +231,7 @@ Envie um vídeo menor!`
           if (error) {
             deleteTempFile(inputPath);
             throw new DangerError(
-              "Erro ao converter vídeo para sticker!\n\n",
+              "Error al convertir vídeo para sticker!\n\n",
               JSON.stringify(error, null, 2)
             );
           }
@@ -237,8 +239,8 @@ Envie um vídeo menor!`
           await successReact();
           await stickerFromFile(outputPath);
 
-          fs.unlinkSync(inputPath);
-          fs.unlinkSync(outputPath);
+          deleteTempFile(inputPath);
+          deleteTempFile(outputPath);
         }
       );
     }
@@ -251,7 +253,7 @@ Envie um vídeo menor!`
         image: { url },
         caption: caption ? `${BOT_EMOJI} ${caption}` : "",
       },
-      { url, quoted: info }
+      { quoted: info }
     );
   };
 
@@ -262,7 +264,7 @@ Envie um vídeo menor!`
         audio: { url },
         mimetype: "audio/mp4",
       },
-      { url, quoted: info }
+      { quoted: info }
     );
   };
 
@@ -272,7 +274,7 @@ Envie um vídeo menor!`
       {
         video: { url },
       },
-      { url, quoted: info }
+      { quoted: info }
     );
   };
 
@@ -288,7 +290,7 @@ Envie um vídeo menor!`
         return false;
       }
 
- const isOwner =
+      const isOwner =
         participant.id === owner || participant.admin === "superadmin";
 
       const isAdmin = participant.admin === "admin";
@@ -379,7 +381,7 @@ function extractDataFromInfo(info) {
       args: [],
       body: "",
       command: "",
-      from: "",
+      from: info?.key?.remoteJid || "", // Aseguramos que from tenga un valor por defecto
       fullArgs: "",
       isReply: false,
       prefix: "",
@@ -449,7 +451,7 @@ function deleteTempFile(file) {
       }
     } catch (error) {
       errorLog(
-        "Erro ao deletar arquivo temporário!\n\n",
+        "Error al eliminar archivo temporal!\n\n",
         JSON.stringify(error, null, 2)
       );
     }
