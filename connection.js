@@ -52,6 +52,9 @@ const store = createSimpleStore();
 bannerLog();
 
 async function startConnection() {
+  let retries = 0;
+  const maxRetries = 5;
+  
   try {
     const { state, saveCreds } = await useMultiFileAuthState(BAILEYS_CREDS_DIR);
     const { version } = await fetchLatestBaileysVersion();
@@ -80,7 +83,11 @@ async function startConnection() {
 
     // Enlazar nuestra store personalizada con el socket
     store.bind(socket.ev);
-
+    
+    // Variable para controlar si ya se ha solicitado el código
+    let codeRequested = false;
+    let waitingForAuth = false;
+    
     if (!socket.authState.creds.registered) {
       warningLog("Archivos necesarios no Encontrados.");
 
@@ -99,6 +106,9 @@ async function startConnection() {
         errorLog("Número incorrecto, Ejemplo: 51921826291.");
         process.exit(1);
       }
+      
+      // Marcar que estamos esperando autenticación
+      waitingForAuth = true;
 
       if (enableTutor === "s") {
         await delay(1000);
@@ -114,12 +124,30 @@ async function startConnection() {
         await delay(5000);
       }
 
-      const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-      infoLog(`Código: ${code}`);
+      try {
+        const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+        infoLog(`Código: ${code}`);
+        codeRequested = true;
+        
+        // Mostrar mensaje de espera para que el usuario introduzca el código en WhatsApp
+        infoLog("Por favor, introduce este código en la aplicación de WhatsApp cuando se te solicite.");
+        infoLog("Esperando a que completes la vinculación en WhatsApp...");
+      } catch (error) {
+        errorLog(`Error al solicitar código de emparejamiento: ${error.message}`);
+        return process.exit(1);
+      }
     }
 
     socket.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
+
+      // Si estábamos esperando autenticación y hay un cambio en la conexión
+      if (waitingForAuth && update.qr === undefined && codeRequested) {
+        if (connection === "open") {
+          waitingForAuth = false;
+          successLog("¡Autenticación exitosa!");
+        }
+      }
 
       if (connection === "close") {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
@@ -128,10 +156,26 @@ async function startConnection() {
           errorLog("Borre la carpeta baileys, Bot desconectado Permanentemente");
           process.exit(1);
         } else {
-          warningLog("Conexión perdida. Intentando reconectar en el menor tiempo posible...");
-          setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
+          warningLog("Conexión perdida. Intentando reconectar...");
+          
+          // Incrementar contador de reintentos
+          retries++;
+          
+          if (retries > maxRetries) {
+            errorLog(`Máximo de reintentos (${maxRetries}) alcanzado. Cerrando aplicación.`);
+            process.exit(1);
+          }
+          
+          // Esperar un tiempo proporcional al número de reintentos (backoff exponencial)
+          const reconnectDelay = Math.min(1000 * Math.pow(2, retries), 30000);
+          warningLog(`Reintentando en ${reconnectDelay/1000} segundos... (intento ${retries}/${maxRetries})`);
+          
+          setTimeout(startConnection, reconnectDelay);
         }
       } else if (connection === "open") {
+        // Reiniciar contador de reintentos cuando la conexión es exitosa
+        retries = 0;
+        
         successLog("¡El bot está conectado exitosamente!");
 
         try {
@@ -176,8 +220,20 @@ async function startConnection() {
     return socket;
   } catch (error) {
     errorLog(`Error en la conexión: ${error.message}`);
-    warningLog("Intentando reconectar en 1 segundo...");
-    setTimeout(startConnection, 1000);
+    
+    // Incrementar contador de reintentos
+    retries++;
+    
+    if (retries > maxRetries) {
+      errorLog(`Máximo de reintentos (${maxRetries}) alcanzado. Cerrando aplicación.`);
+      process.exit(1);
+    }
+    
+    // Esperar un tiempo proporcional al número de reintentos (backoff exponencial)
+    const reconnectDelay = Math.min(1000 * Math.pow(2, retries), 30000);
+    warningLog(`Reintentando en ${reconnectDelay/1000} segundos... (intento ${retries}/${maxRetries})`);
+    
+    setTimeout(startConnection, reconnectDelay);
   }
 }
 
