@@ -22,6 +22,8 @@
     "gemini-chatbot": "^1.0.0",
     "hercai": "^12.4.0",
     "node-cache": "^5.1.2",
-    "pino": "^9.5.0"
+    "pino": "^9.5.0",
+    "moment": "^2.29.4",
+    "qrcode": "^1.5.1"
   }
 }
