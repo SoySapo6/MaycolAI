@@ -1,21 +1,58 @@
 const fs = require('fs');
 const path = require('path');
 const QRCode = require('qrcode');
-const baileys = require('baileys');
 const pino = require('pino');
+const { delay } = require('delay');
+const NodeCache = require('node-cache');
 
-const {
-  makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore
-} = baileys;
+// Importaciones actualizadas de @whiskeysockets/baileys
+const { 
+  default: makeWASocket, 
+  DisconnectReason, 
+  useMultiFileAuthState, 
+  fetchLatestBaileysVersion, 
+  isJidBroadcast, 
+  isJidStatusBroadcast, 
+  proto, 
+  isJidNewsletter
+} = require("@whiskeysockets/baileys");
 
+// Importar el manejador de comandos
 const manejarComando = require("../index.js");
 
+// Crear una caché para los reintentos de mensajes
+const msgRetryCounterCache = new NodeCache();
+
+// Función para eliminar acentos y caracteres especiales
 function removeAccentsAndSpecialCharacters(text) {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "");
+}
+
+// Función para crear un almacén simple en memoria
+function createSimpleStore() { 
+  const messages = {};
+
+  return { 
+    loadMessage: async (jid, id) => { 
+      return messages[`${jid}:${id}`] || null; 
+    },
+
+    storeMessage: async (msg) => {
+      if (msg.key && msg.key.remoteJid && msg.key.id) {
+        messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
+      }
+    },
+
+    bind: (ev) => {
+      ev.on('messages.upsert', ({ messages: newMessages }) => {
+        for (const msg of newMessages) {
+          if (msg.key && msg.key.remoteJid && msg.key.id) {
+            messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
+          }
+        }
+      });
+    }
+  }; 
 }
 
 module.exports = async (conn, from, args) => {
@@ -34,109 +71,174 @@ module.exports = async (conn, from, args) => {
       if (subbotIniciado) return;
       subbotIniciado = true;
 
-      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-      const { version } = await fetchLatestBaileysVersion();
-      const logger = pino({ level: "silent" });
+      try {
+        // Obtener el estado de autenticación
+        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+        // Obtener la versión más reciente de Baileys
+        const { version } = await fetchLatestBaileysVersion();
+        // Crear un logger silencioso
+        const logger = pino({ level: "silent" });
+        // Crear el store simple
+        const store = createSimpleStore();
 
-      const sock = makeWASocket({
-        version,
-        logger,
-        auth: {
-          creds: state.creds,
-          keys: makeCacheableSignalKeyStore(state.keys)
-        },
-        printQRInTerminal: false,
-        browser: ['SoyMaycol', 'Chrome', '1.0']
-      });
+        // Crear el socket con las configuraciones actualizadas
+        const sock = makeWASocket({
+          version,
+          logger,
+          auth: state,
+          printQRInTerminal: false,
+          browser: ['SoyMaycol', 'Chrome', '1.0'],
+          defaultQueryTimeoutMs: 60 * 1000,
+          shouldIgnoreJid: (jid) =>
+            isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+          keepAliveIntervalMs: 60 * 1000,
+          markOnlineOnConnect: true,
+          msgRetryCounterCache,
+          shouldSyncHistoryMessage: () => false,
+          getMessage: async (key) => {
+            try {
+              const msg = await store.loadMessage(key.remoteJid, key.id);
+              return msg ? msg.message : undefined;
+            } catch (error) {
+              return proto.Message.fromObject({});
+            }
+          },
+        });
 
-      // Ahora los mensajes pasan a index.js
-      sock.ev.on('messages.upsert', async ({ messages }) => {
-        const m = messages[0];
-        if (!m || !m.message || m.key.fromMe) return;
+        // Enlazar el store con el socket
+        store.bind(sock.ev);
 
-        const tipo = Object.keys(m.message)[0];
-        let texto = '';
+        // Manejar actualizaciones de credenciales
+        sock.ev.on("creds.update", saveCreds);
 
-        if (tipo === 'conversation') texto = m.message.conversation;
-        else if (tipo === 'extendedTextMessage') texto = m.message.extendedTextMessage.text;
-        else if (tipo === 'imageMessage' && m.message.imageMessage.caption) texto = m.message.imageMessage.caption;
-        else if (tipo === 'videoMessage' && m.message.videoMessage.caption) texto = m.message.videoMessage.caption;
+        // Manejar mensajes entrantes
+        sock.ev.on('messages.upsert', async ({ messages, type }) => {
+          const m = messages[0];
+          if (!m || !m.message || m.key.fromMe) return;
 
-        texto = texto.trim();
-        const jid = m.key.remoteJid;
+          // Extraer el texto del mensaje
+          let texto = '';
+          const msgType = Object.keys(m.message)[0];
+          
+          if (msgType === 'conversation') texto = m.message.conversation;
+          else if (msgType === 'extendedTextMessage') texto = m.message.extendedTextMessage.text;
+          else if (msgType === 'imageMessage' && m.message.imageMessage.caption) texto = m.message.imageMessage.caption;
+          else if (msgType === 'videoMessage' && m.message.videoMessage.caption) texto = m.message.videoMessage.caption;
 
-        // Prefijo
-        const prefix = ['.', '/', '#', '!', '?'].find(p => texto.startsWith(p));
-        if (!prefix) return;
+          texto = texto.trim();
+          const jid = m.key.remoteJid;
 
-        const args = texto.slice(1).trim().split(/ +/);
-        const command = args.shift().toLowerCase();
-        const cleanCommand = removeAccentsAndSpecialCharacters(command);
+          // Verificar el prefijo
+          const prefix = ['.', '/', '#', '!', '?'].find(p => texto.startsWith(p));
+          if (!prefix) return;
 
-        try {
-          // Asegurarse de que la función manejarComando está recibiendo correctamente el socket y el jid.
-          await manejarComando(sock, jid, cleanCommand, args);
-        } catch (err) {
-          console.error("Error al ejecutar comando:", err);
-          await sock.sendMessage(jid, { text: "❌ Ocurrió un error al ejecutar el comando." });
-        }
-      });
+          const args = texto.slice(1).trim().split(/ +/);
+          const command = args.shift().toLowerCase();
+          const cleanCommand = removeAccentsAndSpecialCharacters(command);
 
-      sock.ev.on("connection.update", async ({ connection, qr, lastDisconnect }) => {
-        if (qr && !usarCode) {
-          const qrImage = await QRCode.toBuffer(qr);
-          await conn.sendMessage(from, {
-            image: qrImage,
-            caption: "📲 Escanea el QR desde *WhatsApp > Vincular dispositivo*"
-          });
-        }
+          try {
+            // Registrar el comando en la consola
+            console.log(`
+╔════════════════════╗
+║ 🤖 ✧ 𝑪𝒐𝒎𝒂𝒏𝒅𝒐 𝑺𝒖𝒃𝒃𝒐𝒕 ✧ 🤖 ║
+╚════════════════════╝
 
-        if (connection === "open") {
-          await conn.sendMessage(from, {
-            text: `✅ *Subbot conectado con éxito.*\n\nUsa *#menu* para ver los comandos disponibles.\n\nCanal: https://whatsapp.com/channel/0029VayXJte65yD6LQGiRB0R`
-          });
-        }
+⌨️ Comando: ${cleanCommand}
+🔧 Argumentos: ${args.join(' ')}
+👤 Usuario: ${jid.split('@')[0]}
+━━━━━༺༻━━━━━
+`);
+            
+            // Ejecutar el comando
+            await manejarComando(sock, jid, cleanCommand, args);
+          } catch (err) {
+            console.error("Error al ejecutar comando:", err);
+            await sock.sendMessage(jid, { text: "❌ Ocurrió un error al ejecutar el comando." });
+          }
+        });
 
-        if (connection === "close") {
-          const statusCode = lastDisconnect?.error?.output?.statusCode;
-          const code = DisconnectReason[statusCode] || lastDisconnect?.reason || "Desconocido";
-
-          if (code !== 'restartRequired') {
+        // Manejar actualizaciones de conexión
+        sock.ev.on("connection.update", async ({ connection, qr, lastDisconnect }) => {
+          if (qr && !usarCode) {
+            // Generar la imagen QR
+            const qrImage = await QRCode.toBuffer(qr);
             await conn.sendMessage(from, {
-              text: `❌ *Subbot desconectado.* Motivo: ${code}.`
+              image: qrImage,
+              caption: "📲 Escanea el QR desde *WhatsApp > Vincular dispositivo*"
             });
           }
 
-          const debeReconectar = ['restartRequired', 'connectionClosed', 'timedOut'].includes(code);
+          if (connection === "open") {
+            // Notificar conexión exitosa
+            await conn.sendMessage(from, {
+              text: `✅ *Subbot conectado con éxito.*\n\nUsa *#menu* para ver los comandos disponibles.\n\nCanal: https://whatsapp.com/channel/0029VayXJte65yD6LQGiRB0R`
+            });
 
-          if (usarCode) {
-            subbotIniciado = false;
-            return;
+            // Actualizar biografía del subbot
+            try {
+              const nuevaBio = "★彡[sᴜʙʙᴏᴛ]彡★ ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+              await sock.updateProfileStatus(nuevaBio);
+              console.log("✅ Biografía del subbot actualizada a: " + nuevaBio);
+            } catch (error) {
+              console.error("❌ Error al actualizar la biografía del subbot:", error.message);
+            }
           }
 
-          if (debeReconectar) {
-            subbotIniciado = false;
-            return startSubbot();
+          if (connection === "close") {
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const reasonCode = DisconnectReason[statusCode] || "Desconocido";
+            
+            console.log(`Subbot desconectado. Motivo: ${reasonCode} (Código: ${statusCode})`);
+
+            if (reasonCode !== 'loggedOut') {
+              await conn.sendMessage(from, {
+                text: `❌ *Subbot desconectado.* Motivo: ${reasonCode}.`
+              });
+            }
+
+            const debeReconectar = ['restartRequired', 'connectionClosed', 'timedOut'].includes(reasonCode);
+
+            if (usarCode) {
+              subbotIniciado = false;
+              return;
+            }
+
+            if (debeReconectar) {
+              subbotIniciado = false;
+              setTimeout(startSubbot, 1000);
+              return;
+            }
+
+            if (reasonCode === 'loggedOut') {
+              // Borrar la sesión si se cerró sesión
+              if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
+              await conn.sendMessage(from, {
+                text: `❌ *Subbot desconectado permanentemente.* Motivo: Sesión cerrada.`
+              });
+            }
           }
+        });
 
-          if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
+        // Solicitar código de vinculación si se especificó
+        if (usarCode) {
+          try {
+            const code = await sock.requestPairingCode(from.split("@")[0]);
+            await conn.sendMessage(from, {
+              text: `🔐 *Código generado:*\n\n${code}`
+            });
+          } catch (e) {
+            await conn.sendMessage(from, {
+              text: `❌ Error al generar código: ${e.message}`
+            });
+            subbotIniciado = false;
+          }
         }
-      });
-
-      sock.ev.on("creds.update", saveCreds);
-
-      if (usarCode) {
-        try {
-          const code = await sock.requestPairingCode(from.split("@")[0]);
-          await conn.sendMessage(from, {
-            text: `🔐 *Código generado:*\n\n${code}`
-          });
-        } catch (e) {
-          await conn.sendMessage(from, {
-            text: `❌ Error al generar código: ${e.message}`
-          });
-          subbotIniciado = false;
-        }
+      } catch (error) {
+        console.error("Error al iniciar subbot:", error);
+        await conn.sendMessage(from, {
+          text: `❌ Error al iniciar subbot: ${error.message || error}`
+        });
+        subbotIniciado = false;
       }
     };
 
