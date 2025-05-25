@@ -181,6 +181,27 @@ async function runLite({ socket, data }) {
       return;
     }
 
+   if (body.toLowerCase().includes("mrbeast")) {
+  const inputTextb = body;
+
+  if (!inputTextb) {
+    await reply("Ingresa un texto para hablar conmigo");
+    return;
+  }
+
+  await waitReply("MrBeast está procesando su solicitud 🤓");
+
+  try {
+    const responseText = await chatb(inputTextb); // Este debe ser el modelo que responde como MrBeast
+    await successReply(responseText);
+  } catch (error) {
+    await errorReply("Hubo un error al obtener la respuesta de Gemini 🤖");
+    console.error(error);
+  }
+
+  return;
+   }
+
     if (body === "Hola") {
       await reply("Hola, Soy MaycolAI. Si quieres uaar el bot usa .menu");
       return;
