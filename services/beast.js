@@ -2,7 +2,7 @@ const { exec } = require("child_process");
 
 async function chatb(prompt) {
   return new Promise((resolve, reject) => {
-    const command = `curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCYWNbM2ZgdDSp9NlFxTgp0Wtwaaw7dyRc" \
+    const command = `curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCzPFOops-tGDKPCXEj0qTOTWx-lyN_iGE" \
       -H "Content-Type: application/json" \
       -X POST \
       -d '{
