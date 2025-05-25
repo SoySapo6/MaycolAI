@@ -8,10 +8,9 @@ const {
   isJidBroadcast,
   isJidStatusBroadcast,
   proto,
-  makeInMemoryStore,
   isJidNewsletter,
   delay,
-} = require("@whiskeysockets/baileys"); // Corregido: usar @whiskeysockets/baileys
+} = require("@whiskeysockets/baileys");
 const config = require("./config");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -31,7 +30,36 @@ const {
 const { welcome } = require("./welcome");
 
 const msgRetryCounterCache = new NodeCache();
-const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
+
+// Función para crear un almacén en memoria simple
+function createSimpleStore() {
+  const messages = {};
+  
+  return {
+    loadMessage: async (jid, id) => {
+      return messages[`${jid}:${id}`] || null;
+    },
+    
+    storeMessage: async (msg) => {
+      if (msg.key && msg.key.remoteJid && msg.key.id) {
+        messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
+      }
+    },
+    
+    bind: (ev) => {
+      ev.on('messages.upsert', ({ messages: newMessages }) => {
+        for (const msg of newMessages) {
+          if (msg.key && msg.key.remoteJid && msg.key.id) {
+            messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
+          }
+        }
+      });
+    }
+  };
+}
+
+// Crear un almacén simple
+const store = createSimpleStore();
 
 bannerLog();
 
@@ -53,9 +81,12 @@ async function startConnection() {
       msgRetryCounterCache,
       shouldSyncHistoryMessage: () => false,
       getMessage: async (key) => {
-        if (!store) return proto.Message.fromObject({});
-        const msg = await store.loadMessage(key.remoteJid, key.id);
-        return msg ? msg.message : undefined;
+        try {
+          const msg = await store.loadMessage(key.remoteJid, key.id);
+          return msg ? msg.message : undefined;
+        } catch (error) {
+          return proto.Message.fromObject({});
+        }
       },
     });
 
