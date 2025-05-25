@@ -82,72 +82,74 @@ async function startConnection() {
     store.bind(socket.ev);
 
     if (!socket.authState.creds.registered) {
-  warningLog("Archivos necesarios no Encontrados.");
+      warningLog("Archivos necesarios no Encontrados.");
 
-  let enableTutor = "s";
+      let enableTutor = "s";
 
-  do {
-    if (!["s", "n"].includes(enableTutor)) {
-      errorLog("Opción inválida");
-    }
-    enableTutor = await textInput("¿Deseas un tutorial? s/n : ");
-  } while (!["s", "n"].includes(enableTutor));
-
-  const phoneNumber = await textInput("Ingrese su número:");
-
-  if (!phoneNumber || !onlyNumbers(phoneNumber)) {
-    errorLog("Número incorrecto, Ejemplo: 51921826291.");
-    process.exit(1);
-  }
-
-  if (enableTutor === "s") {
-    await delay(1000);
-    tutorLog("Estamos generando su código... Recuerda:\n");
-    await delay(5000);
-    tutorLog("⌛ Generando código, aguarde.. 25% completado.\n");
-    await delay(10000);
-    tutorLog("⌛ Generando código, aguarde... 50% completado.\n", "cyan");
-    await delay(10000);
-    tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
-    await delay(10000);
-    tutorLog("✅ Generación completada! Escanee el código QR para continuar...\n", "green");
-    await delay(5000);
-  }
-
-  // Aquí removemos la línea que pide código directamente para que el socket gestione el QR
-  // const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-  // infoLog(`Código: ${code}`);
-
-  // En cambio, podemos activar la impresión del QR en consola (temporal):
-  socket.ev.on('connection.update', (update) => {
-    if (update.qr) {
-      infoLog(`Escanee este código QR con el número ${phoneNumber}:`);
-      console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
-    }
-  });
-    }
-        try {
-          // Cambiar la biografía del perfil del bot
-          const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
-          await socket.updateProfileStatus(nuevaBio);
-          successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
-        } catch (error) {
-          errorLog("❌ Error al actualizar la biografía del bot.");
+      do {
+        if (!["s", "n"].includes(enableTutor)) {
+          errorLog("Opción inválida");
         }
+        enableTutor = await textInput("¿Deseas un tutorial? s/n : ");
+      } while (!["s", "n"].includes(enableTutor));
 
-        socket.ev.on("creds.update", saveCreds);
-        socket.ev.on("messages.upsert", async ({ messages, type }) => {
-          const msg = messages[0];
-          if (!msg.message) return;
+      const phoneNumber = await textInput("Ingrese su número:");
 
-          const hora = moment().format("HH:mm:ss");
-          const isGroup = msg.key.remoteJid.endsWith("@g.us");
-          const senderID = isGroup ? msg.key.participant : msg.key.remoteJid;
-          const mensajeTexto = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
-          const tipoMensaje = mensajeTexto ? mensajeTexto : "Contenido Multimedia o Corrupto";
-          const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
+      if (!phoneNumber || !onlyNumbers(phoneNumber)) {
+        errorLog("Número incorrecto, Ejemplo: 51921826291.");
+        process.exit(1);
+      }
 
-          console.log(`✨🗨️ *Nuevo Mensaje* 💬
+      if (enableTutor === "s") {
+        await delay(1000);
+        tutorLog("Estamos generando su código... Recuerda:\n");
+        await delay(5000);
+        tutorLog("⌛ Generando código, aguarde.. 25% completado.\n");
+        await delay(10000);
+        tutorLog("⌛ Generando código, aguarde... 50% completado.\n", "cyan");
+        await delay(10000);
+        tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
+        await delay(10000);
+        tutorLog("✅ Generación completada! Escanee el código QR para continuar...\n", "green");
+        await delay(5000);
+      }
+
+      // Aquí removemos la línea que pide código directamente para que el socket gestione el QR
+      // const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+      // infoLog(`Código: ${code}`);
+
+      // En cambio, podemos activar la impresión del QR en consola (temporal):
+      socket.ev.on('connection.update', (update) => {
+        if (update.qr) {
+          infoLog(`Escanee este código QR con el número ${phoneNumber}:`);
+          console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
+        }
+      });
+    }
+
+    try {
+      // Cambiar la biografía del perfil del bot
+      const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+      await socket.updateProfileStatus(nuevaBio);
+      successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
+    } catch (error) {
+      errorLog("❌ Error al actualizar la biografía del bot.");
+    }
+
+    socket.ev.on("creds.update", saveCreds);
+    
+    socket.ev.on("messages.upsert", async ({ messages, type }) => {
+      const msg = messages[0];
+      if (!msg.message) return;
+
+      const hora = moment().format("HH:mm:ss");
+      const isGroup = msg.key.remoteJid.endsWith("@g.us");
+      const senderID = isGroup ? msg.key.participant : msg.key.remoteJid;
+      const mensajeTexto = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
+      const tipoMensaje = mensajeTexto ? mensajeTexto : "Contenido Multimedia o Corrupto";
+      const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
+
+      console.log(`✨🗨️ *Nuevo Mensaje* 💬
 
 ⏰ | Hora: ${hora} | ⏰
 
@@ -157,15 +159,13 @@ async function startConnection() {
 
 🔮💫 ${config.BOT_NAME} te observa... 🔮💫\n`);
 
-          runLite({ socket, data: { messages, type } });
-        });
-        socket.ev.on("group-participants.update", (data) => welcome({ socket, data }));
-
-        return socket;
-      }
+      runLite({ socket, data: { messages, type } });
     });
 
+    socket.ev.on("group-participants.update", (data) => welcome({ socket, data }));
+
     return socket;
+
   } catch (error) {
     errorLog(`Error en la conexión: ${error.message}`);
     warningLog("Intentando reconectar en 1 segundo...");
