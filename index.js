@@ -189,7 +189,7 @@ async function runLite({ socket, data }) {
     return;
   }
 
-  await waitReply("MrBeast está procesando su solicitud 🤓");
+  await waitReply("se está procesando su solicitud 🤓");
 
   try {
     const responseText = await chatb(inputTextb); // Este debe ser el modelo que responde como MrBeast
