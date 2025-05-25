@@ -1,9 +1,17 @@
 // Hecho por Maycol
 
-// Importaciones principales de @whiskeysockets/baileys
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, 
-        isJidBroadcast, isJidStatusBroadcast, proto, isJidNewsletter, delay } = require("@whiskeysockets/baileys");
-
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  isJidBroadcast,
+  isJidStatusBroadcast,
+  proto,
+  makeInMemoryStore,
+  isJidNewsletter,
+  delay,
+} = require("@whiskeysockets/baileys"); // Corregido: usar @whiskeysockets/baileys
 const config = require("./config");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -11,43 +19,19 @@ const pino = require("pino");
 const { BAILEYS_CREDS_DIR } = require("./config");
 const { runLite } = require("./index");
 const { onlyNumbers } = require("./utils/functions");
-const { textInput, infoLog, warningLog, errorLog, successLog, tutorLog, bannerLog, } = require("./utils/terminal");
+const {
+  textInput,
+  infoLog,
+  warningLog,
+  errorLog,
+  successLog,
+  tutorLog,
+  bannerLog,
+} = require("./utils/terminal");
 const { welcome } = require("./welcome");
 
 const msgRetryCounterCache = new NodeCache();
-
-// Crear un logger silencioso para el store
-const storeLogger = pino({ level: 'fatal' });
-
-// Función para crear un almacén en memoria simple
-function createSimpleStore() {
-  const messages = {};
-  
-  return {
-    loadMessage: async (jid, id) => {
-      return messages[`${jid}:${id}`] || null;
-    },
-    
-    storeMessage: async (msg) => {
-      if (msg.key && msg.key.remoteJid && msg.key.id) {
-        messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
-      }
-    },
-    
-    bind: (ev) => {
-      ev.on('messages.upsert', ({ messages: newMessages }) => {
-        for (const msg of newMessages) {
-          if (msg.key && msg.key.remoteJid && msg.key.id) {
-            messages[`${msg.key.remoteJid}:${msg.key.id}`] = msg;
-          }
-        }
-      });
-    }
-  };
-}
-
-// Crear un almacén simple
-const store = createSimpleStore();
+const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
 bannerLog();
 
@@ -59,7 +43,7 @@ async function startConnection() {
     const socket = makeWASocket({
       version,
       logger: pino({ level: "error" }), // solo muestra errores importantes
-      printQRInTerminal: false,
+      printQRInTerminal: false, // Mantener en false para evitar QR
       defaultQueryTimeoutMs: 60 * 1000,
       auth: state,
       shouldIgnoreJid: (jid) =>
@@ -69,16 +53,13 @@ async function startConnection() {
       msgRetryCounterCache,
       shouldSyncHistoryMessage: () => false,
       getMessage: async (key) => {
-        try {
-          const msg = await store.loadMessage(key.remoteJid, key.id);
-          return msg ? msg.message : undefined;
-        } catch (error) {
-          return proto.Message.fromObject({});
-        }
+        if (!store) return proto.Message.fromObject({});
+        const msg = await store.loadMessage(key.remoteJid, key.id);
+        return msg ? msg.message : undefined;
       },
     });
 
-    // Enlazar nuestra store personalizada con el socket
+    // Bind store to socket events
     store.bind(socket.ev);
 
     if (!socket.authState.creds.registered) {
@@ -110,32 +91,43 @@ async function startConnection() {
         await delay(10000);
         tutorLog("⌛ Generando código, aguarde... 75% completado.\n");
         await delay(10000);
-        tutorLog("✅ Generación completada! Escanee el código QR para continuar...\n", "green");
+        tutorLog("✅ Generación completada! Enviando código...\n", "green");
         await delay(5000);
       }
 
-      // Aquí removemos la línea que pide código directamente para que el socket gestione el QR
-      // const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-      // infoLog(`Código: ${code}`);
+      // Generar código de vinculación
+      const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+      infoLog(`Código: ${code}`);
+    }
 
-      // En cambio, podemos activar la impresión del QR en consola (temporal):
-      socket.ev.on('connection.update', (update) => {
-        if (update.qr) {
-          infoLog(`Escanee este código QR con el número ${phoneNumber}:`);
-          console.log(update.qr);  // o generar QR en terminal con una librería QR para mejor visualización
+    socket.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect } = update;
+
+      if (connection === "close") {
+        const statusCode = lastDisconnect?.error?.output?.statusCode;
+
+        if (statusCode === DisconnectReason.loggedOut) {
+          errorLog("Borre la carpeta baileys, Bot desconectado Permanentemente");
+          process.exit(1);
+        } else {
+          warningLog("Conexión perdida. Intentando reconectar en el menor tiempo posible...");
+          setTimeout(startConnection, 300); // Espera 300ms antes de reconectar
         }
-      });
-    }
+      } else if (connection === "open") {
+        successLog("¡El bot está conectado exitosamente!");
 
-    try {
-      // Cambiar la biografía del perfil del bot
-      const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
-      await socket.updateProfileStatus(nuevaBio);
-      successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
-    } catch (error) {
-      errorLog("❌ Error al actualizar la biografía del bot.");
-    }
+        try {
+          // Cambiar la biografía del perfil del bot
+          const nuevaBio = "★彡[ᴍᴀʏᴄᴏʟᴀɪ]彡★  ᴴᵉᶜʰᵒ ᵖᵒʳ ˢᵒʸᴹᵃʸᶜᵒˡ";
+          await socket.updateProfileStatus(nuevaBio);
+          successLog("✅ Biografía del bot actualizada a: " + nuevaBio);
+        } catch (error) {
+          errorLog("❌ Error al actualizar la biografía del bot.");
+        }
+      }
+    });
 
+    // Event listeners fuera del connection.update para evitar duplicados
     socket.ev.on("creds.update", saveCreds);
     
     socket.ev.on("messages.upsert", async ({ messages, type }) => {
@@ -150,22 +142,18 @@ async function startConnection() {
       const destino = isGroup ? `Grupo: ${msg.key.remoteJid}` : `Privado: ${senderID.replace(/@s\.whatsapp\.net/, "")}`;
 
       console.log(`✨🗨️ *Nuevo Mensaje* 💬
-
-⏰ | Hora: ${hora} | ⏰
-
-🌿💚 | Mensaje: ${tipoMensaje} | 💚🌿
-
-👥📞 | Número/Grupo: ${destino} | 📞👥
-
-🔮💫 ${config.BOT_NAME} te observa... 🔮💫\n`);
+- ⏰ | *Hora:* ${hora} | ⏰
+- 🌿💚 | *Mensaje:* ${tipoMensaje} | 💚🌿
+- 👥📞 | *Número/Grupo:* ${destino} | 📞👥
+- 🔮💫 *${config.BOT_NAME} te observa...* 🔮💫\n`);
 
       runLite({ socket, data: { messages, type } });
     });
-
+    
     socket.ev.on("group-participants.update", (data) => welcome({ socket, data }));
 
     return socket;
-
+    
   } catch (error) {
     errorLog(`Error en la conexión: ${error.message}`);
     warningLog("Intentando reconectar en 1 segundo...");
